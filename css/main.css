@@ -655,6 +655,14 @@ p span {
     line-height: 1.3;
 }
 
+.hero-venue {
+    margin-top: 6px;
+    font-size: 14px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+}
+
 .hero-authors {
     font-size: clamp(14px, 1.6vw, 18px);
 }
