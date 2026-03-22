@@ -714,7 +714,6 @@ p span {
 .figure-container img {
     display: block;
     width: 100%;
-    max-width: 420px;
     height: auto;
     max-height: 400px;
     object-fit: contain;
