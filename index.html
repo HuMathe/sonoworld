@@ -180,10 +180,10 @@
             <div id="results-recon"></div> -->
 
 
-            <div class="x-section-title">Tech Innovations</div>
+            <div class="x-section-title">Pipeline</div>
 
             <!-- 1. Overview Section -->
-            <div style="margin-bottom: 40px; margin: 0 16px;">
+            <!-- <div style="margin-bottom: 40px; margin: 0 16px;">
                 <img src="assets/method/overview.jpg" alt="Overview" 
                     style="width: 100%;">
                 <p style="font-size: 18px; margin-top: 24px; margin-left: auto; margin-right: auto;">
@@ -196,42 +196,51 @@
                     then encodes these voxels into a 
                     compact Structured Latent space.
                 </p>
-            </div>
+            </div> -->
 
             <!-- 2. O-Voxel Section (Card Style) -->
             <div style="background: rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 48px; margin: 0 16px; margin-top: 32px;">
                 
                 <!-- Left: Image -->
-                <div style="flex: 1; min-width: 250px; display: flex; justify-content: center; align-items: center;">
-                    <img src="assets/method/ovoxel.png" alt="O-Voxel" style="max-height: 250px; width: auto; max-width: 100%;">
+                <div style="flex: 1; min-width: 400px; display: flex; justify-content: center; align-items: center;">
+                    <img src="assets/method/visual_scene_generation.png" alt="O-Voxel" style="max-height: 400px; width: auto; max-width: 100%;">
                 </div>
 
                 <!-- Right: Text -->
                 <div style="flex: 10; min-width: 300px; font-size: 15px;">
                     <div style="margin-top: 0; margin-bottom: 20px; font-size: 24px; color: #ffffff;">
-                        O-Voxel: <span style="color: #a476be; font-style: italic;">Omni-Voxel Representation</span>
+                        <span style="color: #5c91d6; font-style: italic;">Visual Scene Generation</span>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        O-Voxel is a novel "field-free" sparse voxel structure designed to encode both precise geometry and complex appearance simultaneously.
+                        SonoWorld first builds the visual scene <b>V</b> from a single image through a three-stage process:
                     </div>
                     
                     <!-- Styled List Items -->
                     <!-- Geometry Block -->
-                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                    <!-- <div style="display: flex; gap: 16px; align-items: flex-start;">
                         <div style="background-color: rgba(34, 197, 94, 0.3); color: #4ade80; font-weight: 700; padding: 6px 12px; border-radius: 8px; font-size: 12px; letter-spacing: 1px;">GEO</div>
                         <div>
                             <span style="color: #fff; font-weight: 500; display: block; margin-bottom: 4px;">Geometry (<i>f<sup>shape</sup></i>)</span> 
                             <span style="font-size: 15px;">Utilizing a Flexible Dual Grids representation to handle arbitrary topologies while preserving sharp edges.</span>
                         </div>
-                    </div>
+                    </div> -->
                     
                     <!-- Appearance Block -->
-                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                    <!-- <div style="display: flex; gap: 16px; align-items: flex-start;">
                         <div style="background-color: rgba(59, 130, 246, 0.3); color: #60a5fa; font-weight: 700; padding: 6px 12px; border-radius: 8px; font-size: 12px; letter-spacing: 1px;">MAT</div>
                         <div>
                             <span style="color: #fff; font-weight: 500; display: block; margin-bottom: 4px;">Appearance (<i>f<sup>mat</sup></i>)</span> 
                             <span style="font-size: 15px;">Supports full PBR attributes (Base Color, Metallic, Roughness, Alpha) to accurately model rich surface materials.</span>
                         </div>
+                    </div> -->
+                    <div style="margin-bottom: 5px;">
+                        (1) Calibrate the image <b>I</b> by estimating the camera elevation <i>&phi;</i> and field of view <i>f</i>;
+                    </div>
+                    <div style="margin-bottom: 5px;">
+                        (2) Warp the calibrated image <i>I</i> into the panoramic domain and outpaint it to obtain a full 360&deg; panorama <i>I</i><sub>pano</sub>;
+                    </div>
+                    <div style="margin-bottom: 5px;">
+                        (3) Lift the panorama <i>I</i><sub>pano</sub> to 3D using a panorama-to-3D model <i>G</i><sub>V</sub>, producing photorealistic 3D Gaussian splats and panoramic depth map <b>D</b>, which together form the visual scene <b>V</b>.
                     </div>
                 </div>
             </div>
