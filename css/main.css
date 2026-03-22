@@ -695,3 +695,63 @@ p span {
         padding: 8px 14px;
     }
 }
+
+.figure-container {
+    flex: 1 1 380px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.figure-container img {
+    display: block;
+    width: 100%;
+    max-width: 420px;
+    height: auto;
+    max-height: 400px;
+    object-fit: contain;
+}
+
+.container {
+    display: flex;
+    flex-wrap: wrap;   /* 🔥必须 */
+}
+
+img {
+    display: block;
+    max-width: 100%;
+    height: auto;
+}
+
+@media (max-width: 768px) {
+    .figure-container {
+        flex: 0 0 100%;
+        width: 100%;
+        min-width: 0;
+    }
+
+    .figure-container img {
+        width: 100%;
+        max-width: 100%;
+        max-height: none;
+    }
+
+    .pipeline-text {
+        flex: 0 0 100%;
+        min-width: 0 !important;
+    }
+}
+
+html, body {
+    overflow-x: hidden;
+}
+
+.container > * {
+    min-width: 0;
+}
+
+.pipeline-card,
+.figure-container,
+.pipeline-text {
+    min-width: 0;
+}
