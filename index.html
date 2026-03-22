@@ -215,7 +215,7 @@
                         <span style="color: #5c91d6; font-style: italic;">Visual Scene Generation</span>
                     </div>
                     <div style="margin-bottom: 20px;">
-                        SonoWorld first builds the visual scene <b>V</b> from a single image through a three-stage process:
+                        We first build the visual scene <b><i>V</i></b> from a single image through a three-stage process:
                     </div>
                     
                     <!-- Styled List Items -->
@@ -243,7 +243,7 @@
                         (2) Warp the calibrated image into the panoramic domain and outpaint it to obtain a full 360&deg; panorama <i>I</i><sub>pano</sub>;
                     </div>
                     <div style="margin-bottom: 5px;">
-                        (3) Lift the <i>I</i><sub>pano</sub> to 3D using a panorama-to-3D model <i>G</i><sub>V</sub>, producing 3D Gaussian splats and panoramic depth map <b>D</b>, which together form the visual scene <b>V</b>.
+                        (3) Lift the <i>I</i><sub>pano</sub> to 3D using a panorama-to-3D model <i>𝒢</i><sub>V</sub>, producing 3D Gaussian splats and panoramic depth map 𝒟, which together form the visual scene <b><i>V</i></b>.
                     </div>
                 </div>
             </div>
@@ -257,7 +257,7 @@
                     </div>
                     
                     <div style="margin-bottom: 20px;">
-                        SonoWorld grounds potential sound sources in the panorama by combining semantic proposal and panoramic segmentation:
+                        We ground potential sound sources in the panorama by combining semantic proposal and panoramic segmentation:
                     </div>
 
                     <div style="margin-bottom: 20px;">
@@ -275,7 +275,65 @@
                 </div> -->
                 
                 <div class="figure-container">
-                    <img src="assets/method/360_grounding.png" alt="360_grounding">
+                    <img src="assets/method/360_grounding.png" alt="360_semantic_grounding">
+                </div>
+            </div>
+
+            <div style="background: rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; display: flex; flex-wrap: wrap-reverse; align-items: center; gap: 48px; margin: 0 16px; margin-top: 32px;">
+                
+                <!-- Left: Image -->
+                <!-- <div style="flex: 1; min-width: 400px; display: flex; justify-content: center; align-items: center;">
+                    <img src="assets/method/visual_scene_generation.png" alt="O-Voxel" style="max-height: 400px; width: auto; max-width: 100%;">
+                </div> -->
+                <div class="figure-container">
+                    <img src="assets/method/ambisonics_encoding.png" alt="ambisonics_encoding">
+                </div>
+
+                <!-- Right: Text -->
+                <!-- <div style="flex: 10; min-width: 300px; font-size: 15px;"> -->
+                <div class="pipeline-text" style="flex: 10; min-width: 300px; font-size: 15px;">
+                    <div style="margin-top: 0; margin-bottom: 20px; font-size: 24px; color: #ffffff;">
+                        <span style="color: #df5b19; font-style: italic;">Visual Scene Generation</span>
+                    </div>
+                    <div style="margin-bottom: 20px;">
+                        Our ambisonics encoding builds the audio scene <b><i>A</i></b> by assigning each sound a spatial type and encoding it into ambisonic coefficients around the listener pose <i>p</i>.
+                    </div>
+                    
+                    <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 14px;">
+                        <div style="width: 92px; flex: 0 0 92px;">
+                            <div style="display: inline-block; background-color: rgba(34, 197, 94, 0.3); color: #4ade80; font-weight: 700; padding: 6px 12px; border-radius: 8px; font-size: 12px; letter-spacing: 1px; text-align: center; min-width: 68px; box-sizing: border-box;">
+                                POINT
+                            </div>
+                        </div>
+                        <div>
+                            <span style="color: #fff; font-weight: 500; display: block; margin-bottom: 4px;">Point Sources</span>
+                            <span style="font-size: 15px;">Models compact emitters as localized 3D sound sources, yielding precise directional audio cues.</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; align-items: flex-start; margin-bottom: 14px;">
+                        <div style="width: 92px; flex: 0 0 92px;">
+                            <div style="display: inline-block; background-color: rgba(59, 130, 246, 0.3); color: #60a5fa; font-weight: 700; padding: 6px 12px; border-radius: 8px; font-size: 12px; letter-spacing: 1px; text-align: center; min-width: 68px; box-sizing: border-box;">
+                                CLUSTER
+                            </div>
+                        </div>
+                        <div>
+                            <span style="color: #fff; font-weight: 500; display: block; margin-bottom: 4px;">Clustered Sources</span>
+                            <span style="font-size: 15px;">Models extended regions as distributed sources, producing more diffuse and spatially smoother sound.</span>
+                        </div>
+                    </div>
+
+                    <div style="display: flex; gap: 16px; align-items: flex-start;">
+                        <div style="width: 92px; flex: 0 0 92px;">
+                            <div style="display: inline-block; background-color: rgba(239, 68, 68, 0.3); color: #f87171; font-weight: 700; padding: 6px 12px; border-radius: 8px; font-size: 12px; letter-spacing: 1px; text-align: center; min-width: 68px; box-sizing: border-box;">
+                                GLOBAL
+                            </div>
+                        </div>
+                        <div>
+                            <span style="color: #fff; font-weight: 500; display: block; margin-bottom: 4px;">Global Ambience</span>
+                            <span style="font-size: 15px;">Models scene-wide background sound as an omnidirectional ambient component without explicit 3D location.</span>
+                        </div>
+                    </div>
                 </div>
             </div>
 
