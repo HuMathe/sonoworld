@@ -563,3 +563,69 @@ p span {
         transform: translateX(-50%) translateY(-5px);
     }
 }
+
+#floating-btn {
+    position: absolute;
+    right: 24px;
+    bottom: 24px;
+    width: 52px;
+    height: 52px;
+    border-radius: 50%;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    z-index: 20;
+}
+
+#floating-btn:hover {
+    background: rgba(255,255,255,0.14);
+    transform: translateY(-1px);
+}
+
+/* tooltip 本体 */
+#floating-btn .tooltip {
+    position: absolute;
+    bottom: 60px;   /* 在按钮上方 */
+    right: 50%;
+    transform: translateX(50%);
+
+    background: rgba(0,0,0,0.8);
+    color: white;
+
+    padding: 6px 10px;
+    border-radius: 6px;
+
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.25);
+    white-space: nowrap;
+
+    opacity: 0;
+    pointer-events: none;
+
+    transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+#floating-btn .tooltip::after {
+    content: "";
+    position: absolute;
+    top: 100%;
+    right: 50%;
+    transform: translateX(50%);
+    border-width: 6px;
+    border-style: solid;
+    border-color: rgba(0,0,0,0.8) transparent transparent transparent;
+}
+
+/* hover 显示 */
+#floating-btn:hover .tooltip {
+    opacity: 1;
+    transform: translateX(50%) translateY(-4px);
+}

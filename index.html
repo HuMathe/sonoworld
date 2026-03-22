@@ -60,12 +60,54 @@
                 indicator.addEventListener('click', scrollToVideo);
             });
         </script>
+
+        <script>
+            function onFloatingClick() {
+                const video = document.getElementById('bgVideo');
+                const icon = document.getElementById('sound-icon');
+                const tooltip = document.querySelector('#floating-btn .tooltip');
+                if (!video) return;
+
+                video.muted = !video.muted;
+
+                if (video.muted) {
+                    icon.innerHTML = `
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+                        <line x1="23" y1="9" x2="17" y2="15"/>
+                        <line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>`;
+                    if (tooltip) tooltip.textContent = 'Unmute';
+                } else {
+                    icon.innerHTML = `
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+                        <path d="M15 9a4 4 0 010 6"/>
+                        <path d="M18 7a7 7 0 010 10"/>
+                    </svg>`;
+                    if (tooltip) tooltip.textContent = 'Mute';
+                }
+            }
+        </script>
     </head>
     <body>
         <div style="width: 100%; height: 80vh; position: relative; overflow: hidden">
-            <video autoplay playsinline loop muted src="assets/bg.mp4" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"></video>
-            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5);">
-                <div style="height: 100%; margin-left: 12%; display: flex; flex-direction: column; justify-content: end; align-items: start; color: white;">
+            <video id="bgVideo" autoplay playsinline loop muted src="assets/bg.mp4" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"></video>
+            <div id="floating-btn" onclick="onFloatingClick()">
+                <span id="sound-icon">
+                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                        stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+                            <path d="M11 5L6 9H3v6h3l5 4V5z"/>
+                            <line x1="23" y1="9" x2="17" y2="15"/>
+                            <line x1="17" y1="9" x2="23" y2="15"/>
+                    </svg>
+                </span>
+                <span class="tooltip">Unmute</span>
+            </div>
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0, 0, 0, 0.5); z-index: 1;">
+                <div style="height: 100%; margin-left: 12%; display: flex; flex-direction: column; justify-content: end; align-items: start; color: white; position: relative; z-index: 2;">
                     <div style="font-size: 96px; font-weight: 300">
                         S<span style="font-size: 72px; font-weight: 300">onoWorld</span>
                     </div>
@@ -87,16 +129,19 @@
                         </a>
                     </div>
                     <div style="font-size: 14px; font-weight: 200; opacity: 0.75; margin-top: 4px;">
-                        University of Maryland, College Park
+                        <a href="https://umd.edu/" style="color: inherit; text-decoration: none;">
+                            University of Maryland, College Park
+                        </a>
                     </div>
 
                     <div style="font-size: 13px; font-weight: 200; opacity: 0.6; margin-top: 2px;">
                         * Indicates equal contribution
                     </div>
                     <div id="links" style="margin-bottom: 10%;">
-                        <div><a id="video" style="cursor: pointer;" onclick="scrollToVideo()">Watch Intro Video</a></div>
-                        <div><a id="paper" href="https://arxiv.org/abs/2512.14692">Read Research Paper</a></div>
+                        <div><a id="paper" href="https://arxiv.org/abs/2512.14692">Paper</a></div>
                         <div><a id="code" href="https://github.com/HuMathe/sonoworld">Code</a></div>
+                        <div><a id="demo" href="https://github.com/HuMathe/sonoworld">Dataset</a></div>
+                        <div><a id="video" style="cursor: pointer;" onclick="scrollToVideo()">Video</a></div>
                     </div>
                 </div>
             </div>
@@ -104,7 +149,7 @@
         <div style="display: flex; justify-content: center; align-items: center; height: 20vh;">
             <div style="font-size: 18px; font-weight: 200; color: #ffffff9f; max-width: 900px;">
                 <!-- An open-source <span style="font-weight: 500; font-style: italic;">4B-parameter</span> image-to-3D model producing <span style="font-weight: 500; font-style: italic;">up to 1536³ PBR textured assets</span>, built on <span style="font-weight: 500; font-style: italic;">native 3D VAEs</span> with <span style="font-weight: 500; font-style: italic;">16× spatial compression</span>, delivering <span style="font-weight: 500; font-style: italic;">efficient, scalable, high-fidelity</span> asset generation. -->
-                We propose the first framework that generates <span style="font-weight: 500; font-style: italic;">an explorable 3D scene</span> and <span style="font-weight: 500; font-style: italic;">semantically grounded spatial ambisonic audio</span> from a single image for <span style="font-weight: 500; font-style: italic;">free-viewpoint audio-visual rendering</span>.
+                We propose the first framework that generates <span style="font-weight: 500; font-style: italic;">an explorable 3D scene</span> and <span style="font-weight: 500; font-style: italic;">semantically grounded spatial ambisonic audio</span> from a single image for <span style="font-weight: 500; font-style: italic;">real-time free-viewpoint audio-visual rendering</span>.
             </div>
         </div>
 
@@ -120,157 +165,11 @@
         </div>
 
         <div id="main">
-            <div class="x-section-title">Key Features</div>
-
-            <div class="feature-container">
-    
-                <!-- 1. Navigation Icons (Row of 4 Squares) -->
-                <div class="feature-tabs">
-                    <!-- Tab 1: Yellow -->
-                    <div class="feature-tab" onclick="showFeature(0, 'yellow')">
-                        <!-- Icon: Star/Quality -->
-                        <svg viewBox="0 0 24 24"><path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/></svg>
-                        <span>High Quality, Resolution, Efficiency</span>
-                    </div>
-
-                    <!-- Tab 2: Red -->
-                    <div class="feature-tab" onclick="showFeature(1, 'red')">
-                        <!-- Icon: Cube/Topology -->
-                        <svg viewBox="0 0 24 24"><path d="M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44A.99.99 0 0 1 12 2c.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9zM12 4.15L6.04 7.5 12 10.85l5.96-3.35L12 4.15zM5 15.91l6 3.38v-6.71L5 9.21v6.7zm14 0v-6.7l-6 3.38v6.71l6-3.38z"/></svg>
-                        <span>Arbitrary<br>Topology</span>
-                    </div>
-
-                    <!-- Tab 3: Blue -->
-                    <div class="feature-tab" onclick="showFeature(2, 'blue')">
-                        <!-- Icon: Palette/Texture -->
-                        <svg viewBox="0 0 24 24"><path d="M12 3a9 9 0 0 0 0 18c.83 0 1.5-.67 1.5-1.5 0-.39-.15-.74-.39-1.01-.23-.26-.38-.61-.38-.99 0-.83.67-1.5 1.5-1.5H16c2.76 0 5-2.24 5-5 0-4.42-4.03-8-9-8zm-5.5 9c-.83 0-1.5-.67-1.5-1.5S5.67 9 6.5 9 8 9.67 8 10.5 7.33 12 6.5 12zm3-4C8.67 8 8 7.33 8 6.5S8.67 5 9.5 5s1.5.67 1.5 1.5S10.33 8 9.5 8zm5 0c-.83 0-1.5-.67-1.5-1.5S13.67 5 14.5 5s1.5.67 1.5 1.5S15.33 8 14.5 8zm3 4c-.83 0-1.5-.67-1.5-1.5S16.67 9 17.5 9s1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-                        <span>Rich<br>Texture</span>
-                    </div>
-
-                    <!-- Tab 4: Purple -->
-                    <div class="feature-tab" onclick="showFeature(3, 'purple')">
-                        <!-- Icon: Bolt/Speed -->
-                        <svg viewBox="0 0 24 24"><path d="M11 21h-1l1-7H7.5c-.58 0-.57-.32-.38-.66.19-.34.05-.08.07-.12C8.48 10.94 10.42 7.54 13 3h1l-1 7h3.5c.49 0 .56.33.47.51l-.07.15C12.96 17.55 11 21 11 21z"/></svg>
-                        <span>Minimalist<br>Asset Processing</span>
-                    </div>
-                </div>
-
-                <!-- 2. Content Display Area -->
-                <div class="feature-content-wrapper">
-                    
-                    <!-- Content 1: High Quality -->
-                    <div class="feature-panel">
-                        <div style="font-size: 24px; font-weight: 700; color: #facd5c; margin-bottom: 16px;">
-                            High Quality, Resolution & Efficiency
-                        </div>
-                        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-                            Our 4B-parameter model generates high-resolution fully textured assets with exceptional fidelity
-                            and efficiency with vanilla DiTs.
-                        </p>
-                        <div style="display: flex; gap: 16px; margin: 0px 16px;">
-                            <div style="background-color: #1f1f1f; border-radius: 8px; padding: 12px 16px; text-align: center; flex-grow: 1;">
-                                <div style="font-size: 24px; font-weight: 700; color: #facd5c; line-height: 1;">3s <span style="font-size: 11px;">(2s+1s)</span></div>
-                                <div style="font-size: 11px; text-transform: uppercase; color: #d3d3d3; margin-top: 4px; letter-spacing: 0.5px;">512<sup>3</sup> resolution</div>
-                            </div>
-                            <div style="background-color: #1f1f1f; border-radius: 8px; padding: 12px 16px; text-align: center; flex-grow: 1;">
-                                <div style="font-size: 24px; font-weight: 700; color: #facd5c; line-height: 1;">17s <span style="font-size: 11px;">(10s+7s)</span></div>
-                                <div style="font-size: 11px; text-transform: uppercase; color: #d3d3d3; margin-top: 4px; letter-spacing: 0.5px;">1024<sup>3</sup> resolution</div>
-                            </div>
-                            <div style="background-color: #1f1f1f; border-radius: 8px; padding: 12px 16px; text-align: center; flex-grow: 1;">
-                                <div style="font-size: 24px; font-weight: 700; color: #facd5c; line-height: 1;">60s <span style="font-size: 11px;">(35s+25s)</span></div>
-                                <div style="font-size: 11px; text-transform: uppercase; color: #d3d3d3; margin-top: 4px; letter-spacing: 0.5px;">1536<sup>3</sup> resolution</div>
-                            </div>
-                        </div>
-                        <div style="color: #7f7f7f; font-size: 12px; margin: 0px 16px; margin-top: 8px; font-weight: 500;">
-                            * Total generation time (shape + material).&nbsp;&nbsp;
-                            ** Tested with NVIDIA H100 GPU.
-                        </div>
-                        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6;">
-                            At the core is the native and compact structured latents, which push the frontiers
-                            of fidelity and compactness at the same time.
-                        </p>
-                        <div style="margin-top: 16px; border-radius: 8px; overflow: hidden; margin: 0 auto; max-width: 500px;">
-                            <img src="assets/feature/fidelity_comparison.png" alt="Fidelity Comparison" style="width: 100%; display: block; object-fit: cover;">
-                        </div> 
-                        <p style="color: #d4d4d8; font-size: 15px; font-weight: 500; line-height: 1.6; text-align: center; margin-top: 8px">
-                            Reconstruction accuracy v.s. Latent compactness
-                        </p>
-                    </div>
-
-                    <!-- Content 2: Topology -->
-                    <div class="feature-panel">
-                        <div style="font-size: 24px; font-weight: 700; color: #d17969; margin-bottom: 16px;">
-                            Arbitrary Topology Handling
-                        </div>
-                        <p style="color: #d4d4d8; font-size: 15px; line-height: 1.6; flex-grow: 1;">
-                            Our method robustly handles complex structures, including 
-                            open surfaces, non-manifold geometry, and enclosed interior structures, breaking the constraints of iso-surface fields.
-                        </p>
-                        <div style="display: flex; flex-wrap: wrap; gap: 12px; margin-left: 16px; margin-bottom: 16px;">
-                            <div style="background-color: #1f1f1f; border: 1px solid #d17969; color: #d17969; border-radius: 8px; padding: 8px 16px; font-weight: 700;">✔ Open Surfaces</div>
-                            <div style="background-color: #1f1f1f; border: 1px solid #d17969; color: #d17969; border-radius: 8px; padding: 8px 16px; font-weight: 700;">✔ Non-manifold</div>
-                            <div style="background-color: #1f1f1f; border: 1px solid #d17969; color: #d17969; border-radius: 8px; padding: 8px 16px; font-weight: 700;">✔ Internal Structures</div>
-                        </div>
-                        <div style="height: 400px; background-color: #1f1f1f; border-radius: 8px; margin: 0 16px;">
-                            <model-viewer
-                                style="width: 100%; height: 100%;"
-                                src="assets/feature/topology.glb"
-                                camera-controls
-                                camera-orbit="-30deg 75deg 1.5m"
-                                tone-mapping="natural"
-                                shadow-intensity="1"
-                                environment-image="assets/env_maps/gradient.jpg"
-                                exposure="2"
-                            ></model-viewer>
-                        </div>
-                        <div style="color: #7f7f7f; font-size: 12px; margin-top: 8px; margin-left: 16px; font-weight: 500;">
-                            * Mesh is cut to showcase internal structure.
-                        </div>
-                    </div>
-
-                    <!-- Content 3: Texture -->
-                    <div class="feature-panel">
-                        <div style="font-size: 24px; font-weight: 700; color: #60a5fa; margin-bottom: 16px;">
-                            Rich Texture Modeling
-                        </div>
-                        <p style="color: #d4d4d8; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                            Our method can model arbitrary surface attributes such as
-                            Base Color, Roughness, Metallic, and Opacity (i.e., Transparency or Alpha channel), enabling Physically Based Rendering (PBR) and photorealistic relighting.
-                        </p>
-                        <div style="border-radius: 8px; overflow: hidden;">
-                            <img src="assets/feature/relighting.webp" alt="Relighting" style="width: 100%; display: block; object-fit: cover;">
-                        </div>
-                    </div>
-
-                    <!-- Content 4: Minimalist -->
-                    <div class="feature-panel">
-                        <div style="font-size: 24px; font-weight: 700; color: #b7a5ff; margin-bottom: 16px;">
-                            Minimalist 3D Asset Pre- and Post-processing
-                        </div>
-                        <p style="color: #d4d4d8; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
-                            Data processing for training and inference are simple, enabling instant conversions that are fully
-                            rendering-free and optimization-free.
-                        </p>
-                        <div style="display: flex; flex-direction: column; gap: 16px; margin: 0px 16px;">
-                        <div style="background-color: #1f1f1f; border-radius: 8px; padding: 12px 16px; text-align: center; flex-grow: 1;">
-                            <div style="font-size: 24px; font-weight: 700; color: #b7a5ff; line-height: 1;">&lt; 10s <span style="font-size: 14px;">on single CPU</span></div>
-                            <div style="font-size: 11px; text-transform: uppercase; color: #d3d3d3; margin-top: 4px; letter-spacing: 0.5px;">Textured Mesh → O-Voxel</div>
-                        </div>
-                        <div style="background-color: #1f1f1f; border-radius: 8px; padding: 12px 16px; text-align: center; flex-grow: 1;">
-                            <div style="font-size: 24px; font-weight: 700; color: #b7a5ff; line-height: 1;">&lt; 100ms <span style="font-size: 14px;">with CUDA acceleration</span></div>
-                            <div style="font-size: 11px; text-transform: uppercase; color: #d3d3d3; margin-top: 4px; letter-spacing: 0.5px;">O-Voxel → Textured Mesh</div>
-                        </div>
-                    </div>
-                    </div>
-
-                </div>
-            </div>
-
-            <div class="x-section-title">Image to 3D Asset Generation</div>
+            <div class="x-section-title">Interactive Demo</div>
             <div id="results-gen"></div>
 
-            <div class="x-section-title">3D Asset Reconstruction</div>
-            <div id="results-recon"></div>
+            <!-- <div class="x-section-title">3D Asset Reconstruction</div>
+            <div id="results-recon"></div> -->
 
 
             <div class="x-section-title">Tech Innovations</div>
@@ -430,6 +329,5 @@
                 <path d="M7 13l5 5 5-5"/>
             </svg>
         </div>
-
     </body>
 </html>
