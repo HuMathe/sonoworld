@@ -43,3 +43,18 @@
 .icon-poster:before {
   content: "\e004";
 }
+
+.hero-desc-wrapper {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 20vh;
+    padding: 0 20px;
+}
+
+.hero-desc {
+    font-size: 18px;
+    font-weight: 200;
+    color: #ffffff9f;
+    max-width: 900px;
+}
