@@ -7,13 +7,13 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0KR382CQKG"></script>
-<script>
-  window.dataLayer = window.dataLayer || [];
-  function gtag(){dataLayer.push(arguments);}
-  gtag('js', new Date());
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
 
-  gtag('config', 'G-0KR382CQKG');
-</script>
+    gtag('config', 'G-0KR382CQKG');
+  </script>
   <style>
     * {
       box-sizing: border-box;
@@ -412,6 +412,29 @@
       color: rgba(255, 255, 255, 0.35);
       z-index: 10;
     }
+    
+    .minimap-loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 14, 26, 0.78);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+      z-index: 30;
+    }
+
+    .minimap-loading-overlay.active {
+      display: flex;
+    }
+
+    .minimap-loading-text {
+      color: rgba(255, 255, 255, 0.9);
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.04em;
+    }
 
     .title-banner {
       position: absolute;
@@ -635,10 +658,19 @@
   </button>
 
   <!-- Minimap -->
+  <!-- <div id="minimap">
+    <div class="minimap-title">Overview</div>
+    <div id="minimapContainer" style="position: absolute; top: 0; left: 0; width: 160px; height: 160px;"></div>
+    <canvas id="minimapCanvas2D" width="160" height="160" style="position: absolute; top: 0; left: 0;"></canvas>
+  </div> -->
   <div id="minimap">
     <div class="minimap-title">Overview</div>
     <div id="minimapContainer" style="position: absolute; top: 0; left: 0; width: 160px; height: 160px;"></div>
     <canvas id="minimapCanvas2D" width="160" height="160" style="position: absolute; top: 0; left: 0;"></canvas>
+
+    <div id="minimapLoadingOverlay" class="minimap-loading-overlay">
+      <div class="minimap-loading-text">Loading...</div>
+    </div>
   </div>
 
   <script type="module">
@@ -788,8 +820,10 @@
         }
 
         minimapSceneLoaded = true;
+        setMinimapLoading(false);
         console.log('Minimap scene loaded:', selectedScene);
       } catch (err) {
+        setMinimapLoading(false);
         console.error('Failed to load minimap scene:', err);
       }
     }
@@ -824,6 +858,12 @@
         loadMinimapScene(selectedScene, requestId);
         minimapLoadTimer = null;
       }, delay);
+    }
+
+    function setMinimapLoading(isLoading) {
+      const overlay = document.getElementById('minimapLoadingOverlay');
+      if (!overlay) return;
+      overlay.classList.toggle('active', isLoading);
     }
     // =================================
 
@@ -1621,6 +1661,7 @@
     document.getElementById('loadGaussianScene').addEventListener('click', async function () {
       const selectedScene = document.getElementById('GsceneSelect').value + '/3d/gaussian.compressed.ply';
       await clearMinimapScene();
+      setMinimapLoading(true);
 
       // Reset camera to origin when loading new scene
       camera.position.set(0, 0, 0);
