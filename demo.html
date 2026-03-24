@@ -380,6 +380,7 @@
       box-shadow: 0 4px 24px rgba(0, 0, 0, 0.5);
       border: 1px solid rgba(255, 255, 255, 0.07);
       overflow: hidden;
+      z-index: 20;
     }
 
     #minimapContainer {
@@ -462,6 +463,11 @@
     #labelRendererLayer {
       clip-path: inset(0 0 0 250px);
       -webkit-clip-path: inset(0 0 0 250px);
+    }
+    
+    #controlPanel,
+    #panelToggleBtn {
+      z-index: 20;
     }
 
     #controlPanel.panel-collapsed ~ #labelRendererLayer,
@@ -1221,6 +1227,18 @@
     // labelRenderer.domElement.style.top = '0';
     // labelRenderer.domElement.style.pointerEvents = 'none';
     // rootElement.appendChild(labelRenderer.domElement);
+    // const labelRenderer = new CSS2DRenderer();
+    // labelRenderer.setSize(renderWidth, renderHeight);
+    // labelRenderer.domElement.id = 'labelRendererLayer';
+    // labelRenderer.domElement.style.position = 'absolute';
+    // labelRenderer.domElement.style.top = '0';
+    // labelRenderer.domElement.style.left = '0';
+    // labelRenderer.domElement.style.width = '100%';
+    // labelRenderer.domElement.style.height = '100%';
+    // labelRenderer.domElement.style.pointerEvents = 'none';
+    // labelRenderer.domElement.style.overflow = 'hidden';
+    // rootElement.appendChild(labelRenderer.domElement);
+    // updateLabelRendererClip();
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(renderWidth, renderHeight);
     labelRenderer.domElement.id = 'labelRendererLayer';
@@ -1231,7 +1249,9 @@
     labelRenderer.domElement.style.height = '100%';
     labelRenderer.domElement.style.pointerEvents = 'none';
     labelRenderer.domElement.style.overflow = 'hidden';
+    labelRenderer.domElement.style.zIndex = '5';
     rootElement.appendChild(labelRenderer.domElement);
+
     updateLabelRendererClip();
 
     const camera = new THREE.PerspectiveCamera(65, renderWidth / renderHeight, 0.1, 500);
