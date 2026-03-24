@@ -667,6 +667,7 @@
     let volumeAudio = true;
     let sourceVisible = false;
     let isSingleSource = false;
+    let minimapLoadTimer = null;
     const panContainer = document.getElementById('panContainer');
     const panMeter     = document.getElementById('panMeter');
     const panValue     = document.getElementById('panValue');
@@ -741,6 +742,61 @@
         if (bufferSamplesEl) bufferSamplesEl.textContent = 'unknown';
         if (bufferMsEl) bufferMsEl.textContent = 'unknown';
       }
+    }
+
+    function loadMinimapScene(selectedScene) {
+      if (minimapSceneLoaded) {
+        minimapViewer.removeSplatScene(0).then(() => {
+          minimapSceneLoaded = false;
+
+          minimapViewer.addSplatScene(
+            selectedScene,
+            {
+              splatAlphaRemovalThreshold: 5,
+              showLoadingUI: false,
+              position: [0, 0, 0],
+              rotation: [1, 0, 0, 0],
+              scale: [1.0, 1.0, 1.0],
+              progressiveLoad: true,
+            },
+          ).then(() => {
+            minimapSceneLoaded = true;
+            console.log('Minimap scene loaded');
+          }).catch((err) => {
+            console.error('Failed to load minimap scene:', err);
+          });
+        }).catch((err) => {
+          console.error('Failed to remove minimap scene:', err);
+        });
+      } else {
+        minimapViewer.addSplatScene(
+          selectedScene,
+          {
+            splatAlphaRemovalThreshold: 5,
+            showLoadingUI: false,
+            position: [0, 0, 0],
+            rotation: [1, 0, 0, 0],
+            scale: [1.0, 1.0, 1.0],
+            progressiveLoad: true,
+          },
+        ).then(() => {
+          minimapSceneLoaded = true;
+          console.log('Minimap scene loaded');
+        }).catch((err) => {
+          console.error('Failed to load minimap scene:', err);
+        });
+      }
+    }
+
+    function scheduleMinimapLoad(selectedScene, delay = 800) {
+      if (minimapLoadTimer) {
+        clearTimeout(minimapLoadTimer);
+      }
+
+      minimapLoadTimer = setTimeout(() => {
+        loadMinimapScene(selectedScene);
+        minimapLoadTimer = null;
+      }, delay);
     }
     // =================================
 
@@ -1546,23 +1602,66 @@
       prevPos.copy(camera.position);
 
       // Load scene into main viewer
+      // if (hasScene) {
+      //   viewer.removeSplatScene(0).then(()=>{
+      //     hasScene = false;
+      //     console.log('Scene removed successfully');
+      //     hasScene = true;
+      //     viewer.addSplatScene(
+      //       selectedScene,
+      //       {
+      //         'splatAlphaRemovalThreshold': 5,
+      //         'showLoadingUI': true,
+      //         'position': [0, 0, 0],
+      //         'rotation': [1, 0, 0, 0],
+      //         'scale': [1.0, 1.0, 1.0],
+      //         'progressiveLoad': false,
+      //       },
+      //     );
+      //   }).catch((err)=>{
+      //     console.error('Failed to remove scene:', err);
+      //   });
+      // } else {
+      //   hasScene = true;
+      //   viewer.addSplatScene(
+      //     selectedScene,
+      //     {
+      //       'splatAlphaRemovalThreshold': 5,
+      //       'showLoadingUI': true,
+      //       'position': [0, 0, 0],
+      //       'rotation': [1, 0, 0, 0],
+      //       'scale': [1.0, 1.0, 1.0],
+      //       'progressiveLoad': false,
+      //     },
+      //   ).then(()=>{
+      //     requestAnimationFrame(update);
+      //   });
+      // }
+
+      // Load scene into main viewer
       if (hasScene) {
-        viewer.removeSplatScene(0).then(()=>{
+        viewer.removeSplatScene(0).then(() => {
           hasScene = false;
           console.log('Scene removed successfully');
+
           hasScene = true;
           viewer.addSplatScene(
             selectedScene,
             {
-              'splatAlphaRemovalThreshold': 5,
-              'showLoadingUI': true,
-              'position': [0, 0, 0],
-              'rotation': [1, 0, 0, 0],
-              'scale': [1.0, 1.0, 1.0],
-              'progressiveLoad': false,
+              splatAlphaRemovalThreshold: 5,
+              showLoadingUI: true,
+              position: [0, 0, 0],
+              rotation: [1, 0, 0, 0],
+              scale: [1.0, 1.0, 1.0],
+              progressiveLoad: false,
             },
-          );
-        }).catch((err)=>{
+          ).then(() => {
+            requestAnimationFrame(update);
+            scheduleMinimapLoad(selectedScene, 800);
+          }).catch((err) => {
+            console.error('Failed to load scene:', err);
+          });
+        }).catch((err) => {
           console.error('Failed to remove scene:', err);
         });
       } else {
@@ -1570,51 +1669,54 @@
         viewer.addSplatScene(
           selectedScene,
           {
-            'splatAlphaRemovalThreshold': 5,
-            'showLoadingUI': true,
-            'position': [0, 0, 0],
-            'rotation': [1, 0, 0, 0],
-            'scale': [1.0, 1.0, 1.0],
-            'progressiveLoad': false,
+            splatAlphaRemovalThreshold: 5,
+            showLoadingUI: true,
+            position: [0, 0, 0],
+            rotation: [1, 0, 0, 0],
+            scale: [1.0, 1.0, 1.0],
+            progressiveLoad: false,
           },
-        ).then(()=>{
+        ).then(() => {
           requestAnimationFrame(update);
+          scheduleMinimapLoad(selectedScene, 800);
+        }).catch((err) => {
+          console.error('Failed to load scene:', err);
         });
       }
 
       // Load same scene into minimap viewer
-      if (minimapSceneLoaded) {
-        minimapViewer.removeSplatScene(0).then(() => {
-          minimapSceneLoaded = false;
-          minimapViewer.addSplatScene(
-            selectedScene,
-            {
-              'splatAlphaRemovalThreshold': 5,
-              'showLoadingUI': false,
-              'position': [0, 0, 0],
-              'rotation': [1, 0, 0, 0],
-              'scale': [1.0, 1.0, 1.0],
-              'progressiveLoad': false,
-            },
-          ).then(() => {
-            minimapSceneLoaded = true;
-          });
-        });
-      } else {
-        minimapViewer.addSplatScene(
-          selectedScene,
-          {
-            'splatAlphaRemovalThreshold': 5,
-            'showLoadingUI': false,
-            'position': [0, 0, 0],
-            'rotation': [1, 0, 0, 0],
-            'scale': [1.0, 1.0, 1.0],
-            'progressiveLoad': false,
-          },
-        ).then(() => {
-          minimapSceneLoaded = true;
-        });
-      }
+      // if (minimapSceneLoaded) {
+      //   minimapViewer.removeSplatScene(0).then(() => {
+      //     minimapSceneLoaded = false;
+      //     minimapViewer.addSplatScene(
+      //       selectedScene,
+      //       {
+      //         'splatAlphaRemovalThreshold': 5,
+      //         'showLoadingUI': false,
+      //         'position': [0, 0, 0],
+      //         'rotation': [1, 0, 0, 0],
+      //         'scale': [1.0, 1.0, 1.0],
+      //         'progressiveLoad': false,
+      //       },
+      //     ).then(() => {
+      //       minimapSceneLoaded = true;
+      //     });
+      //   });
+      // } else {
+      //   minimapViewer.addSplatScene(
+      //     selectedScene,
+      //     {
+      //       'splatAlphaRemovalThreshold': 5,
+      //       'showLoadingUI': false,
+      //       'position': [0, 0, 0],
+      //       'rotation': [1, 0, 0, 0],
+      //       'scale': [1.0, 1.0, 1.0],
+      //       'progressiveLoad': false,
+      //     },
+      //   ).then(() => {
+      //     minimapSceneLoaded = true;
+      //   });
+      // }
 
       loadStaticSourceList(document.getElementById('GsceneSelect').value);
     });  
