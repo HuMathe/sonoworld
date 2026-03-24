@@ -436,6 +436,57 @@
       letter-spacing: 0.04em;
     }
 
+    .main-loading-overlay {
+      position: absolute;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.35);
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      z-index: 900;
+      pointer-events: none;
+    }
+
+    .main-loading-overlay.active {
+      display: flex;
+    }
+
+    .main-loading-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      padding: 18px 22px;
+      border-radius: 12px;
+      background: rgba(10, 14, 26, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35);
+    }
+
+    .main-loading-text {
+      color: rgba(255, 255, 255, 0.88);
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+    }
+
+    .main-loading-spinner {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      border: 2px solid rgba(255, 255, 255, 0.18);
+      border-top-color: rgba(255, 255, 255, 0.88);
+      animation: main-loading-spin 0.9s linear infinite;
+    }
+
+    @keyframes main-loading-spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
     .title-banner {
       position: absolute;
       bottom: 20px;
@@ -672,6 +723,12 @@
       <div class="minimap-loading-text">Loading...</div>
     </div>
   </div>
+  <div id="mainLoadingOverlay" class="main-loading-overlay">
+    <div class="main-loading-card">
+      <div class="main-loading-spinner"></div>
+      <div class="main-loading-text">Loading scene...</div>
+    </div>
+  </div>
 
   <script type="module">
     import * as THREE from 'three';
@@ -710,6 +767,7 @@
     const staticSources = [];
     let volumeAudio = true;
     let sourceVisible = false;
+    let centroidVisible = false;
     let isSingleSource = false;
     let minimapLoadTimer = null;
     let minimapRequestId = 0;
@@ -865,6 +923,23 @@
       if (!overlay) return;
       overlay.classList.toggle('active', isLoading);
     }
+
+    function setMainLoading(isLoading) {
+      const overlay = document.getElementById('mainLoadingOverlay');
+      if (!overlay) return;
+      overlay.classList.toggle('active', isLoading);
+    }
+
+    function resetVisualizationState() {
+      centroidVisible = false;
+      sourceVisible = false;
+
+      staticSources.forEach(s => {
+        if (s.centroid) s.centroid.visible = false;
+        if (s.points) s.points.visible = false;
+        if (s.label) s.label.visible = false;
+      });
+    }
     // =================================
 
     document.getElementById('toggleVolumeAudio').addEventListener('click', function () {
@@ -880,27 +955,28 @@
       }
     });
     document.getElementById('toggleStaticSourceVisibility').addEventListener('click', () => {
+      centroidVisible = !centroidVisible;
+
       staticSources.forEach(s => {
         if (s.centroid) {
-          s.centroid.visible = !s.centroid.visible;
+          s.centroid.visible = centroidVisible;
         }
-        // Update label visibility based on centroid or cluster visibility
         if (s.label) {
-          s.label.visible = s.centroid.visible || (s.points && s.points.visible);
+          s.label.visible = centroidVisible || sourceVisible;
         }
       });
     });
     document.getElementById('toggleClusterVisibility').addEventListener('click', () => {
       sourceVisible = !sourceVisible;
-      for (const s of staticSources) {
+
+      staticSources.forEach(s => {
         if (s.points) {
           s.points.visible = sourceVisible;
         }
-        // Update label visibility based on centroid or cluster visibility
         if (s.label) {
-          s.label.visible = (s.centroid && s.centroid.visible) || sourceVisible;
+          s.label.visible = centroidVisible || sourceVisible;
         }
-      }
+      });
     });
     document.getElementById('goToOrigin').addEventListener('click', () => {
       camera.position.set(0, 0, 0);
@@ -1117,6 +1193,7 @@
         });
       }
       isSingleSource = (staticSources.length === 1);
+      resetVisualizationState();
     }
 
     function setupAudioGraph() {
@@ -1660,7 +1737,9 @@
     // document.getElementById('loadGaussianScene').addEventListener('click', function () {
     document.getElementById('loadGaussianScene').addEventListener('click', async function () {
       const selectedScene = document.getElementById('GsceneSelect').value + '/3d/gaussian.compressed.ply';
+      setMainLoading(true);
       await clearMinimapScene();
+      resetVisualizationState();
       setMinimapLoading(true);
 
       // Reset camera to origin when loading new scene
@@ -1728,15 +1807,18 @@
             },
           ).then(() => {
             // requestAnimationFrame(update);
+            setMainLoading(false);
             if (!hasStartedUpdateLoop) {
               hasStartedUpdateLoop = true;
               requestAnimationFrame(update);
             }
             scheduleMinimapLoad(selectedScene, 800);
           }).catch((err) => {
+            setMainLoading(false);
             console.error('Failed to load scene:', err);
           });
         }).catch((err) => {
+          setMainLoading(false);
           console.error('Failed to remove scene:', err);
         });
       } else {
@@ -1753,12 +1835,14 @@
           },
         ).then(() => {
           // requestAnimationFrame(update);
+          setMainLoading(false);
           if (!hasStartedUpdateLoop) {
             hasStartedUpdateLoop = true;
             requestAnimationFrame(update);
           }
           scheduleMinimapLoad(selectedScene, 800);
         }).catch((err) => {
+          setMainLoading(false);
           console.error('Failed to load scene:', err);
         });
       }
