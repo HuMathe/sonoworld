@@ -464,7 +464,7 @@
       clip-path: inset(0 0 0 250px);
       -webkit-clip-path: inset(0 0 0 250px);
     }
-
+    
     #controlPanel,
     #panelToggleBtn {
       z-index: 20;
@@ -1559,7 +1559,7 @@
               'position': [0, 0, 0],
               'rotation': [1, 0, 0, 0],
               'scale': [1.0, 1.0, 1.0],
-              'progressiveLoad': true,
+              'progressiveLoad': false,
             },
           );
         }).catch((err)=>{
@@ -1575,7 +1575,7 @@
             'position': [0, 0, 0],
             'rotation': [1, 0, 0, 0],
             'scale': [1.0, 1.0, 1.0],
-            'progressiveLoad': true,
+            'progressiveLoad': false,
           },
         ).then(()=>{
           requestAnimationFrame(update);
