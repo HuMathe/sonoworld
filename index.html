@@ -13,7 +13,7 @@
         <link rel="stylesheet" href="css/pv.css">
         <script src="js/window.js"></script>
         <script src="js/carousel.js"></script>
-        <script src="js/generation.js"></script>
+        <!-- <script src="js/generation.js"></script> -->
         <script src="js/reconstruction.js"></script>
 		<script src="js/main.js"></script>
 		<script src="js/pv.js"></script>
@@ -90,6 +90,50 @@
                     if (tooltip) tooltip.textContent = 'Mute';
                 }
             }
+        </script>
+
+        <script>
+            function openInteractiveDemoModal() {
+                const modal = document.getElementById('interactiveDemoModal');
+                const frame = document.getElementById('interactiveDemoModalFrame');
+
+                if (!frame.src) {
+                    frame.src = 'demo.html';
+                }
+
+                modal.classList.add('active');
+                modal.setAttribute('aria-hidden', 'false');
+                document.body.style.overflow = 'hidden';
+            }
+
+            function closeInteractiveDemoModal() {
+                const modal = document.getElementById('interactiveDemoModal');
+                modal.classList.remove('active');
+                modal.setAttribute('aria-hidden', 'true');
+                document.body.style.overflow = '';
+            }
+
+            function fullscreenInteractiveDemo() {
+                const target = document.getElementById('interactiveDemoFullscreenTarget');
+                if (!target) return;
+
+                if (target.requestFullscreen) {
+                    target.requestFullscreen();
+                } else if (target.webkitRequestFullscreen) {
+                    target.webkitRequestFullscreen();
+                } else if (target.msRequestFullscreen) {
+                    target.msRequestFullscreen();
+                }
+            }
+
+            document.addEventListener('keydown', function (e) {
+                const modal = document.getElementById('interactiveDemoModal');
+                if (!modal.classList.contains('active')) return;
+
+                if (e.key === 'Escape') {
+                    closeInteractiveDemoModal();
+                }
+            });
         </script>
     </head>
     <body>
@@ -176,8 +220,73 @@
         </div>
 
         <div id="main">
+            <!-- <div class="x-section-title">Interactive Demo</div>
+            <div id="results-gen"></div> -->
             <div class="x-section-title">Interactive Demo</div>
-            <div id="results-gen"></div>
+
+            <div id="results-gen">
+                <div class="interactive-demo-card">
+                    <div class="interactive-demo-toolbar">
+                        <div class="interactive-demo-label">Embedded Preview</div>
+                        <div class="interactive-demo-actions">
+                            <!-- <button class="demo-action-btn" type="button" onclick="openInteractiveDemoModal()">
+                                Expand
+                            </button> -->
+                            <!-- <a class="demo-action-btn" href="demo.html" target="_blank" rel="noopener"> -->
+                            <a class="demo-action-btn" href="demo.html">
+                                Open Full Demo
+                            </a>
+                        </div>
+                    </div>
+
+                    <div class="interactive-demo-frame-wrap">
+                        <iframe
+                            id="interactiveDemoFrame"
+                            class="interactive-demo-frame"
+                            src="demo.html"
+                            loading="lazy"
+                            allow="fullscreen; autoplay"
+                            referrerpolicy="strict-origin-when-cross-origin">
+                        </iframe>
+                    </div>
+
+                    <div class="interactive-demo-hint">
+                        <!-- Use the embedded preview here, or expand it for a larger interactive viewer. -->
+                        Use the embedded preview here, or open full demo.
+                    </div>
+                </div>
+            </div>
+
+            <div id="interactiveDemoModal" class="interactive-demo-modal" aria-hidden="true">
+                <div class="interactive-demo-modal-backdrop" onclick="closeInteractiveDemoModal()"></div>
+
+                <div class="interactive-demo-modal-panel">
+                    <div class="interactive-demo-modal-toolbar">
+                        <div class="interactive-demo-label">Interactive Viewer</div>
+                        <div class="interactive-demo-actions">
+                            <button class="demo-action-btn" type="button" onclick="fullscreenInteractiveDemo()">
+                                Fullscreen
+                            </button>
+                            <a class="demo-action-btn" href="demo.html" target="_blank" rel="noopener">
+                                Open in New Tab
+                            </a>
+                            <button class="demo-action-btn" type="button" onclick="closeInteractiveDemoModal()">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="interactive-demo-modal-frame-wrap" id="interactiveDemoFullscreenTarget">
+                        <iframe
+                            id="interactiveDemoModalFrame"
+                            class="interactive-demo-modal-frame"
+                            src=""
+                            allow="fullscreen; autoplay"
+                            referrerpolicy="strict-origin-when-cross-origin">
+                        </iframe>
+                    </div>
+                </div>
+            </div>
 
             <!-- <div class="x-section-title">3D Asset Reconstruction</div>
             <div id="results-recon"></div> -->

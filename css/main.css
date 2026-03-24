@@ -762,3 +762,153 @@ html, body {
 .pipeline-text {
     min-width: 0;
 }
+
+.interactive-demo-card {
+    margin: 0 16px;
+    margin-top: 24px;
+    padding: 18px;
+    border-radius: 18px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 12px 40px rgba(0,0,0,0.22);
+}
+
+.interactive-demo-toolbar,
+.interactive-demo-modal-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 14px;
+    flex-wrap: wrap;
+}
+
+.interactive-demo-label {
+    color: rgba(255,255,255,0.82);
+    font-size: 14px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+}
+
+.interactive-demo-actions {
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+.demo-action-btn {
+    appearance: none;
+    border: 1px solid rgba(255,255,255,0.14);
+    background: rgba(255,255,255,0.10);
+    color: #fff;
+    border-radius: 999px;
+    padding: 9px 16px;
+    font-size: 14px;
+    font-weight: 400;
+    text-decoration: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.demo-action-btn:hover {
+    background: rgba(255,255,255,0.18);
+    transform: translateY(-1px);
+}
+
+.interactive-demo-frame-wrap {
+    position: relative;
+    width: 100%;
+    height: min(62vw, 640px);
+    min-height: 360px;
+    overflow: hidden;
+    border-radius: 16px;
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.interactive-demo-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #000;
+}
+
+.interactive-demo-hint {
+    margin-top: 12px;
+    color: rgba(255,255,255,0.58);
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.interactive-demo-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 3000;
+    display: none;
+}
+
+.interactive-demo-modal.active {
+    display: block;
+}
+
+.interactive-demo-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0,0,0,0.72);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.interactive-demo-modal-panel {
+    position: absolute;
+    inset: 4vh 4vw;
+    border-radius: 20px;
+    background: #0b0b0d;
+    border: 1px solid rgba(255,255,255,0.10);
+    box-shadow: 0 24px 80px rgba(0,0,0,0.45);
+    padding: 18px;
+    display: flex;
+    flex-direction: column;
+}
+
+.interactive-demo-modal-frame-wrap {
+    flex: 1;
+    min-height: 0;
+    border-radius: 16px;
+    overflow: hidden;
+    background: #000;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+.interactive-demo-modal-frame {
+    width: 100%;
+    height: 100%;
+    border: 0;
+    display: block;
+    background: #000;
+}
+
+@media (max-width: 768px) {
+    .interactive-demo-card {
+        margin: 0 12px;
+        margin-top: 18px;
+        padding: 14px;
+    }
+
+    .interactive-demo-frame-wrap {
+        height: 56vw;
+        min-height: 260px;
+    }
+
+    .interactive-demo-modal-panel {
+        inset: 2vh 2vw;
+        padding: 12px;
+        border-radius: 14px;
+    }
+
+    .demo-action-btn {
+        font-size: 13px;
+        padding: 8px 14px;
+    }
+}
