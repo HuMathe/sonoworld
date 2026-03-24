@@ -464,7 +464,7 @@
       clip-path: inset(0 0 0 250px);
       -webkit-clip-path: inset(0 0 0 250px);
     }
-    
+
     #controlPanel,
     #panelToggleBtn {
       z-index: 20;
@@ -499,7 +499,7 @@
 <body>
   <!-- Title Banner -->
   <div class="title-banner">
-    Interactive Demo of submission "SonoWorld: From One Image to a 3D Audio-Visual Scene"
+    Interactive Demo of paper "SonoWorld: From One Image to a 3D Audio-Visual Scene"
   </div>
 
   <!-- Control Panel (Left Side) -->
@@ -1559,7 +1559,7 @@
               'position': [0, 0, 0],
               'rotation': [1, 0, 0, 0],
               'scale': [1.0, 1.0, 1.0],
-              'progressiveLoad': false,
+              'progressiveLoad': true,
             },
           );
         }).catch((err)=>{
@@ -1575,7 +1575,7 @@
             'position': [0, 0, 0],
             'rotation': [1, 0, 0, 0],
             'scale': [1.0, 1.0, 1.0],
-            'progressiveLoad': false,
+            'progressiveLoad': true,
           },
         ).then(()=>{
           requestAnimationFrame(update);
