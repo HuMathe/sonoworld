@@ -458,6 +458,17 @@
       transition: width 0.1s ease;
       border-radius: 2px;
     }
+
+    #labelRendererLayer {
+      clip-path: inset(0 0 0 250px);
+      -webkit-clip-path: inset(0 0 0 250px);
+    }
+
+    #controlPanel.panel-collapsed ~ #labelRendererLayer,
+    #controlPanel.panel-collapsed + #panelToggleBtn + #minimap + #labelRendererLayer {
+      clip-path: inset(0 0 0 0);
+      -webkit-clip-path: inset(0 0 0 0);
+    }
   </style>
   <script type="importmap">
   {
@@ -467,6 +478,16 @@
       "@mkkellogg/gaussian-splats-3d": "https://cdn.jsdelivr.net/npm/@mkkellogg/gaussian-splats-3d@0.4.7/build/gaussian-splats-3d.module.js"
     }
   }
+  </script>
+  <script>
+    function updateLabelRendererClip() {
+      const labelLayer = document.getElementById('labelRendererLayer');
+      if (!labelLayer) return;
+
+      const leftInset = controlPanel.classList.contains('panel-collapsed') ? 0 : 250;
+      labelLayer.style.clipPath = `inset(0 0 0 ${leftInset}px)`;
+      labelLayer.style.webkitClipPath = `inset(0 0 0 ${leftInset}px)`;
+    }
   </script>
 </head>
 <body>
@@ -1194,12 +1215,24 @@
     rootElement.appendChild(renderer.domElement);
 
     // Create CSS2DRenderer for labels
+    // const labelRenderer = new CSS2DRenderer();
+    // labelRenderer.setSize(renderWidth, renderHeight);
+    // labelRenderer.domElement.style.position = 'absolute';
+    // labelRenderer.domElement.style.top = '0';
+    // labelRenderer.domElement.style.pointerEvents = 'none';
+    // rootElement.appendChild(labelRenderer.domElement);
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(renderWidth, renderHeight);
+    labelRenderer.domElement.id = 'labelRendererLayer';
     labelRenderer.domElement.style.position = 'absolute';
     labelRenderer.domElement.style.top = '0';
+    labelRenderer.domElement.style.left = '0';
+    labelRenderer.domElement.style.width = '100%';
+    labelRenderer.domElement.style.height = '100%';
     labelRenderer.domElement.style.pointerEvents = 'none';
+    labelRenderer.domElement.style.overflow = 'hidden';
     rootElement.appendChild(labelRenderer.domElement);
+    updateLabelRendererClip();
 
     const camera = new THREE.PerspectiveCamera(65, renderWidth / renderHeight, 0.1, 500);
     camera.position.copy(new THREE.Vector3().fromArray([0, 0, 0]));
@@ -1240,6 +1273,7 @@
       labelRenderer.setSize(w, h);
       camera.aspect = w / h;
       camera.updateProjectionMatrix();
+      updateLabelRendererClip();
     }
     window.addEventListener('resize', onWindowResize);
 
@@ -1612,6 +1646,7 @@
     const toggleBtn = document.getElementById('panelToggleBtn');
     toggleBtn.addEventListener('click', () => {
       controlPanel.classList.toggle('panel-collapsed');
+      updateLabelRendererClip();
     });
   </script>
 </body>
