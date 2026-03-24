@@ -600,18 +600,18 @@
       <div class="panel-body" id="body-scene">
         <label for="GsceneSelect">Gaussian Scene</label>
         <select id="GsceneSelect">
-          <option value="real_scenes_eval/fountain-multi">Real Scene: Fountain</option>
-          <option value="marble-scenes/spring">Synthetic: Cherry</option>
+          <!-- <option value="real_scenes_eval/fountain-multi">Real Scene: Fountain</option>
+          <option value="marble-scenes/spring">Synthetic: Cherry</option> -->
           <script>
             (["fountain-multi","kitchen-multi","pool","pool-2","river-bridge-river","river-bridge-train","stream","stream-walk","two-birds","two-birds-siren"]).forEach(s => {
               const name = {"fountain-multi":"Fountain","kitchen-multi":"Kitchen","pool":"Pool 1","pool-2":"Pool 2","river-bridge-river":"River Bridge (River)","river-bridge-train":"River Bridge (Train)","stream":"Stream","stream-walk":"Stream Walk","two-birds":"Two Birds","two-birds-siren":"Siren"};
-              document.write(`<option value="real_scenes_eval/${s}">${name[s]}</option>`);
+              document.write(`<option value="real_scenes_eval/${s}">SONOWORLD360: ${name[s]}</option>`);
             });
             (["bright","boatshore","forestfire","forestroom","landscape-river","mountainlake","spring"]).forEach(s => {
-              document.write(`<option value="marble-scenes/${s}">${s}</option>`);
+              document.write(`<option value="marble-scenes/${s}">synthetic: ${s}</option>`);
             });
             (["beach_plane","cello","riverside_market"]).forEach(s => {
-              document.write(`<option value="marble-scenes-fov/${s}">fov/${s}</option>`);
+              document.write(`<option value="marble-scenes-fov/${s}">synthetic: ${s}</option>`);
             });
           </script>
         </select>
@@ -1806,6 +1806,28 @@
           console.log('Scene removed successfully');
 
           hasScene = true;
+          // viewer.addSplatScene(
+          //   selectedScene,
+          //   {
+          //     splatAlphaRemovalThreshold: 5,
+          //     showLoadingUI: true,
+          //     position: [0, 0, 0],
+          //     rotation: [1, 0, 0, 0],
+          //     scale: [1.0, 1.0, 1.0],
+          //     progressiveLoad: false,
+          //   },
+          // ).then(() => {
+          //   // requestAnimationFrame(update);
+          //   setMainLoading(false);
+          //   if (!hasStartedUpdateLoop) {
+          //     hasStartedUpdateLoop = true;
+          //     requestAnimationFrame(update);
+          //   }
+          //   scheduleMinimapLoad(selectedScene, 800);
+          // }).catch((err) => {
+          //   setMainLoading(false);
+          //   console.error('Failed to load scene:', err);
+          // });
           viewer.addSplatScene(
             selectedScene,
             {
@@ -1817,13 +1839,19 @@
               progressiveLoad: false,
             },
           ).then(() => {
-            // requestAnimationFrame(update);
             setMainLoading(false);
+
             if (!hasStartedUpdateLoop) {
               hasStartedUpdateLoop = true;
               requestAnimationFrame(update);
             }
+
             scheduleMinimapLoad(selectedScene, 800);
+
+            const sceneBase = document.getElementById('GsceneSelect').value;
+            setTimeout(() => {
+              void loadStaticSourceList(sceneBase);
+            }, 100);
           }).catch((err) => {
             setMainLoading(false);
             console.error('Failed to load scene:', err);
@@ -1834,6 +1862,29 @@
         });
       } else {
         hasScene = true;
+        // viewer.addSplatScene(
+        //   selectedScene,
+        //   {
+        //     splatAlphaRemovalThreshold: 5,
+        //     showLoadingUI: true,
+        //     position: [0, 0, 0],
+        //     rotation: [1, 0, 0, 0],
+        //     scale: [1.0, 1.0, 1.0],
+        //     progressiveLoad: false,
+        //   },
+        // ).then(() => {
+        //   // requestAnimationFrame(update);
+        //   setMainLoading(false);
+        //   if (!hasStartedUpdateLoop) {
+        //     hasStartedUpdateLoop = true;
+        //     requestAnimationFrame(update);
+        //   }
+        //   scheduleMinimapLoad(selectedScene, 800);
+        // }).catch((err) => {
+        //   setMainLoading(false);
+        //   console.error('Failed to load scene:', err);
+        // });
+
         viewer.addSplatScene(
           selectedScene,
           {
@@ -1845,13 +1896,19 @@
             progressiveLoad: false,
           },
         ).then(() => {
-          // requestAnimationFrame(update);
           setMainLoading(false);
+
           if (!hasStartedUpdateLoop) {
             hasStartedUpdateLoop = true;
             requestAnimationFrame(update);
           }
+
           scheduleMinimapLoad(selectedScene, 800);
+
+          const sceneBase = document.getElementById('GsceneSelect').value;
+          setTimeout(() => {
+            void loadStaticSourceList(sceneBase);
+          }, 100);
         }).catch((err) => {
           setMainLoading(false);
           console.error('Failed to load scene:', err);
@@ -1892,7 +1949,7 @@
       //   });
       // }
 
-      loadStaticSourceList(document.getElementById('GsceneSelect').value);
+      // loadStaticSourceList(document.getElementById('GsceneSelect').value);
     });  
 
     const playBtn = document.getElementById('togglePlay');
