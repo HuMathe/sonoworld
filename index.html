@@ -135,6 +135,41 @@
                 }
             });
         </script>
+
+        <script>
+            function updateInteractiveDemoVisibility() {
+                const desktopDemo = document.querySelector('.interactive-demo-desktop');
+                const mobileNote = document.querySelector('.interactive-demo-mobile-note');
+
+                if (!desktopDemo || !mobileNote) return;
+
+                const ua = navigator.userAgent || '';
+
+                const isPhoneOrAndroid =
+                    /Android|iPhone|iPod|BlackBerry|IEMobile|Opera Mini/i.test(ua);
+
+                const isIPad =
+                    /iPad/i.test(ua) ||
+                    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+                const isTouchDevice =
+                    navigator.maxTouchPoints > 0 ||
+                    window.matchMedia('(pointer: coarse)').matches;
+
+                const isNonDesktop = isPhoneOrAndroid || isIPad || isTouchDevice;
+
+                if (isNonDesktop) {
+                    desktopDemo.style.display = 'none';
+                    mobileNote.style.display = 'block';
+                } else {
+                    desktopDemo.style.display = 'block';
+                    mobileNote.style.display = 'none';
+                }
+            }
+
+            document.addEventListener('DOMContentLoaded', updateInteractiveDemoVisibility);
+            window.addEventListener('resize', updateInteractiveDemoVisibility);
+        </script>
     </head>
     <body>
         <div style="width: 100%; height: 80vh; position: relative; overflow: hidden">
@@ -225,35 +260,39 @@
             <div class="x-section-title">Interactive Demo</div>
 
             <div id="results-gen">
-                <div class="interactive-demo-card">
-                    <div class="interactive-demo-toolbar">
-                        <div class="interactive-demo-label">Embedded Preview</div>
-                        <div class="interactive-demo-actions">
-                            <!-- <button class="demo-action-btn" type="button" onclick="openInteractiveDemoModal()">
-                                Expand
-                            </button> -->
-                            <!-- <a class="demo-action-btn" href="demo.html" target="_blank" rel="noopener"> -->
-                            <a class="demo-action-btn" href="demo.html">
-                                Open Full Demo
-                            </a>
+                <div id="results-gen">
+                    <!-- 桌面版 -->
+                    <div class="interactive-demo-desktop">
+                        <div class="interactive-demo-card">
+                            <div class="interactive-demo-toolbar">
+                                <div class="interactive-demo-label">Embedded Preview</div>
+                                <div class="interactive-demo-actions">
+                                    <a class="demo-action-btn" href="demo.html">
+                                        Open Full Demo
+                                    </a>
+                                </div>
+                            </div>
+
+                            <div class="interactive-demo-frame-wrap">
+                                <iframe
+                                    class="interactive-demo-frame"
+                                    src="demo.html"
+                                    loading="lazy"
+                                    allow="fullscreen; autoplay">
+                                </iframe>
+                            </div>
+
+                            <div class="interactive-demo-hint">
+                                Use the embedded preview here, or open the full demo.
+                            </div>
                         </div>
                     </div>
 
-                    <div class="interactive-demo-frame-wrap">
-                        <iframe
-                            id="interactiveDemoFrame"
-                            class="interactive-demo-frame"
-                            src="demo.html"
-                            loading="lazy"
-                            allow="fullscreen; autoplay"
-                            referrerpolicy="strict-origin-when-cross-origin">
-                        </iframe>
+                    <!-- 手机 / iPad 提示 -->
+                    <div class="interactive-demo-mobile-note">
+                        The interactive demo is only available on desktop browsers.
                     </div>
 
-                    <div class="interactive-demo-hint">
-                        <!-- Use the embedded preview here, or expand it for a larger interactive viewer. -->
-                        Use the embedded preview here, or open full demo.
-                    </div>
                 </div>
             </div>
 
