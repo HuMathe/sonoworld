@@ -495,6 +495,18 @@
       labelLayer.style.webkitClipPath = `inset(0 0 0 ${leftInset}px)`;
     }
   </script>
+  <!-- <script>
+    window.addEventListener('pagehide', async () => {
+      try {
+        if (audioCtx && audioCtx.state !== 'closed') {
+          await audioCtx.close();
+          audioCtx = null;
+        }
+      } catch (e) {
+        console.warn('Failed to close audio context:', e);
+      }
+    });
+  </script> -->
 </head>
 <body>
   <!-- Title Banner -->
@@ -668,6 +680,7 @@
     let sourceVisible = false;
     let isSingleSource = false;
     let minimapLoadTimer = null;
+    let minimapRequestId = 0;
     const panContainer = document.getElementById('panContainer');
     const panMeter     = document.getElementById('panMeter');
     const panValue     = document.getElementById('panValue');
@@ -744,32 +757,17 @@
       }
     }
 
-    function loadMinimapScene(selectedScene) {
-      if (minimapSceneLoaded) {
-        minimapViewer.removeSplatScene(0).then(() => {
+    async function loadMinimapScene(selectedScene, requestId) {
+      try {
+        if (minimapSceneLoaded) {
+          await minimapViewer.removeSplatScene(0);
           minimapSceneLoaded = false;
+        }
 
-          minimapViewer.addSplatScene(
-            selectedScene,
-            {
-              splatAlphaRemovalThreshold: 5,
-              showLoadingUI: false,
-              position: [0, 0, 0],
-              rotation: [1, 0, 0, 0],
-              scale: [1.0, 1.0, 1.0],
-              progressiveLoad: false,
-            },
-          ).then(() => {
-            minimapSceneLoaded = true;
-            console.log('Minimap scene loaded');
-          }).catch((err) => {
-            console.error('Failed to load minimap scene:', err);
-          });
-        }).catch((err) => {
-          console.error('Failed to remove minimap scene:', err);
-        });
-      } else {
-        minimapViewer.addSplatScene(
+        // 如果这时已经不是最新请求了，就直接退出
+        if (requestId !== minimapRequestId) return;
+
+        await minimapViewer.addSplatScene(
           selectedScene,
           {
             splatAlphaRemovalThreshold: 5,
@@ -779,22 +777,51 @@
             scale: [1.0, 1.0, 1.0],
             progressiveLoad: false,
           },
-        ).then(() => {
-          minimapSceneLoaded = true;
-          console.log('Minimap scene loaded');
-        }).catch((err) => {
-          console.error('Failed to load minimap scene:', err);
-        });
+        );
+
+        // 只有最新请求才允许生效
+        if (requestId !== minimapRequestId) {
+          try {
+            await minimapViewer.removeSplatScene(0);
+          } catch (e) {}
+          return;
+        }
+
+        minimapSceneLoaded = true;
+        console.log('Minimap scene loaded:', selectedScene);
+      } catch (err) {
+        console.error('Failed to load minimap scene:', err);
+      }
+    }
+
+    async function clearMinimapScene() {
+      if (minimapLoadTimer) {
+        clearTimeout(minimapLoadTimer);
+        minimapLoadTimer = null;
+      }
+
+      minimapRequestId += 1; // 让所有旧请求失效
+
+      if (minimapSceneLoaded) {
+        try {
+          await minimapViewer.removeSplatScene(0);
+        } catch (err) {
+          console.warn('Failed to clear minimap scene:', err);
+        }
+        minimapSceneLoaded = false;
       }
     }
 
     function scheduleMinimapLoad(selectedScene, delay = 800) {
+      minimapRequestId += 1;
+      const requestId = minimapRequestId;
+
       if (minimapLoadTimer) {
         clearTimeout(minimapLoadTimer);
       }
 
       minimapLoadTimer = setTimeout(() => {
-        loadMinimapScene(selectedScene);
+        loadMinimapScene(selectedScene, requestId);
         minimapLoadTimer = null;
       }, delay);
     }
@@ -1405,6 +1432,7 @@
 
     // Track if minimap scene is loaded
     let minimapSceneLoaded = false;
+    let hasStartedUpdateLoop = false;
 
     let lastSourceCount = 0;
 
@@ -1589,8 +1617,10 @@
       }
     }
 
-    document.getElementById('loadGaussianScene').addEventListener('click', function () {
+    // document.getElementById('loadGaussianScene').addEventListener('click', function () {
+    document.getElementById('loadGaussianScene').addEventListener('click', async function () {
       const selectedScene = document.getElementById('GsceneSelect').value + '/3d/gaussian.compressed.ply';
+      await clearMinimapScene();
 
       // Reset camera to origin when loading new scene
       camera.position.set(0, 0, 0);
@@ -1656,7 +1686,11 @@
               progressiveLoad: false,
             },
           ).then(() => {
-            requestAnimationFrame(update);
+            // requestAnimationFrame(update);
+            if (!hasStartedUpdateLoop) {
+              hasStartedUpdateLoop = true;
+              requestAnimationFrame(update);
+            }
             scheduleMinimapLoad(selectedScene, 800);
           }).catch((err) => {
             console.error('Failed to load scene:', err);
@@ -1677,7 +1711,11 @@
             progressiveLoad: false,
           },
         ).then(() => {
-          requestAnimationFrame(update);
+          // requestAnimationFrame(update);
+          if (!hasStartedUpdateLoop) {
+            hasStartedUpdateLoop = true;
+            requestAnimationFrame(update);
+          }
           scheduleMinimapLoad(selectedScene, 800);
         }).catch((err) => {
           console.error('Failed to load scene:', err);
