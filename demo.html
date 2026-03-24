@@ -940,6 +940,37 @@
         if (s.label) s.label.visible = false;
       });
     }
+
+    function stopCurrentSceneAudio() {
+      staticSources.forEach(s => {
+        if (s.srcNode) {
+          try { s.srcNode.stop(); } catch (e) {}
+          try { s.srcNode.disconnect(); } catch (e) {}
+        }
+        if (s.gain) {
+          try { s.gain.disconnect(); } catch (e) {}
+        }
+        if (s.stereoPan) {
+          try { s.stereoPan.disconnect(); } catch (e) {}
+        }
+
+        if (s.foaGains) {
+          Object.values(s.foaGains).forEach(node => {
+            try { node.disconnect(); } catch (e) {}
+          });
+        }
+
+        if (s.hrirConvolvers) {
+          Object.values(s.hrirConvolvers).forEach(node => {
+            try { node.disconnect(); } catch (e) {}
+          });
+        }
+
+        if (s.binauralMerger) {
+          try { s.binauralMerger.disconnect(); } catch (e) {}
+        }
+      });
+    }
     // =================================
 
     document.getElementById('toggleVolumeAudio').addEventListener('click', function () {
@@ -1748,6 +1779,7 @@
     // document.getElementById('loadGaussianScene').addEventListener('click', function () {
     document.getElementById('loadGaussianScene').addEventListener('click', async function () {
       const selectedScene = document.getElementById('GsceneSelect').value + '/3d/gaussian.compressed.ply';
+      stopCurrentSceneAudio();
       setMainLoading(true);
       await clearMinimapScene();
       resetVisualizationState();
