@@ -643,8 +643,8 @@
       <div class="panel-body" id="body-audio">
         <span class="controls-label">Rendering Method</span>
         <button id="toggleVolumeAudio">Volume Audio</button>
-        <span class="controls-label">Spatial Mode</span>
-        <button id="toggleHRIR">HRIR Binaural (Loading...)</button>
+        <!-- <span class="controls-label">Spatial Mode</span>
+        <button id="toggleHRIR">HRIR Binaural (Loading...)</button> -->
         <span class="controls-label">Playback</span>
         <button id="togglePlay" disabled>Pause</button>
       </div>
@@ -697,7 +697,7 @@
           <div class="shortcut-row"><span class="shortcut-key">Mouse</span><span class="shortcut-desc">Look Around</span></div>
           <div class="shortcut-row"><span class="shortcut-key">Space</span><span class="shortcut-desc">Play/Pause Audio</span></div>
         </div>
-        <div class="info-note">Requires an HTTP server — file:// URLs are not supported</div>
+        <!-- <div class="info-note">Requires an HTTP server — file:// URLs are not supported</div> -->
       </div>
     </div>
 
@@ -948,12 +948,20 @@
     });
 
     const hrirBtn = document.getElementById('toggleHRIR');
-    hrirBtn.addEventListener('click', function () {
-      if (hrirBuffers) {
-        useHRIR = !useHRIR;
-        this.textContent = useHRIR ? 'HRIR Binaural (ON)' : 'Stereo Panning';
-      }
-    });
+    // hrirBtn.addEventListener('click', function () {
+    //   if (hrirBuffers) {
+    //     useHRIR = !useHRIR;
+    //     this.textContent = useHRIR ? 'HRIR Binaural (ON)' : 'Stereo Panning';
+    //   }
+    // });
+    if (hrirBtn) {
+      hrirBtn.addEventListener('click', function () {
+        if (hrirBuffers) {
+          useHRIR = !useHRIR;
+          this.textContent = useHRIR ? 'HRIR Binaural (ON)' : 'Stereo Panning';
+        }
+      });
+    }
     document.getElementById('toggleStaticSourceVisibility').addEventListener('click', () => {
       centroidVisible = !centroidVisible;
 
@@ -1057,7 +1065,10 @@
           // hrirBtn.textContent = 'HRIR Unavailable';
           // hrirBtn.disabled = true;
         }
-        hrirBtn.textContent = useHRIR ? 'HRIR Binaural (ON)' : 'Stereo Panning';
+        // hrirBtn.textContent = useHRIR ? 'HRIR Binaural (ON)' : 'Stereo Panning';
+        if (hrirBtn) {
+          hrirBtn.textContent = useHRIR ? 'HRIR Binaural (ON)' : 'Stereo Panning';
+        }
       } else {
         updateAudioMetrics(); // ==== NEW: 再 load 场景时也更新一下 ====
       }
