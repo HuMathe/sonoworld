@@ -1839,6 +1839,10 @@
     // document.getElementById('loadGaussianScene').addEventListener('click', function () {
     document.getElementById('loadGaussianScene').addEventListener('click', async function () {
       const selectedScene = document.getElementById('GsceneSelect').value + '/3d/gaussian.compressed.ply';
+      const controlPanel = document.getElementById('controlPanel');
+      if (controlPanel) {
+        controlPanel.scrollTop = 0;
+      }
       stopCurrentSceneAudio();
       setMainLoading(true);
       await clearMinimapScene();
