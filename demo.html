@@ -293,6 +293,19 @@
       border-color: rgba(255, 255, 255, 0.28);
     }
 
+    button#loadGaussianScene:disabled {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.25);
+      cursor: not-allowed;
+    }
+
+    button#loadGaussianScene:disabled:hover {
+      background: rgba(255, 255, 255, 0.03);
+      border-color: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.25);
+    }
+
     .button-group {
       display: grid;
       gap: 6px;
@@ -446,7 +459,7 @@
       backdrop-filter: blur(2px);
       -webkit-backdrop-filter: blur(2px);
       z-index: 900;
-      pointer-events: none;
+      pointer-events: auto;
     }
 
     .main-loading-overlay.active {
@@ -549,6 +562,20 @@
       clip-path: inset(0 0 0 0);
       -webkit-clip-path: inset(0 0 0 0);
     }
+
+    #controlPanel.ui-locked {
+      overflow-y: hidden !important;
+      pointer-events: none;
+    }
+
+    #panelToggleBtn.ui-locked {
+      pointer-events: none;
+      opacity: 0.45;
+    }
+
+    #controlPanel.ui-locked::-webkit-scrollbar {
+      display: none;
+    }
   </style>
   <script type="importmap">
   {
@@ -562,9 +589,10 @@
   <script>
     function updateLabelRendererClip() {
       const labelLayer = document.getElementById('labelRendererLayer');
-      if (!labelLayer) return;
+      const panel = document.getElementById('controlPanel');
+      if (!labelLayer || !panel) return;
 
-      const leftInset = controlPanel.classList.contains('panel-collapsed') ? 0 : 250;
+      const leftInset = panel.classList.contains('panel-collapsed') ? 0 : 250;
       labelLayer.style.clipPath = `inset(0 0 0 ${leftInset}px)`;
       labelLayer.style.webkitClipPath = `inset(0 0 0 ${leftInset}px)`;
     }
@@ -771,6 +799,7 @@
     let isSingleSource = false;
     let minimapLoadTimer = null;
     let minimapRequestId = 0;
+    let isUiLocked = false;
     const panContainer = document.getElementById('panContainer');
     const panMeter     = document.getElementById('panMeter');
     const panValue     = document.getElementById('panValue');
@@ -928,6 +957,7 @@
       const overlay = document.getElementById('mainLoadingOverlay');
       if (!overlay) return;
       overlay.classList.toggle('active', isLoading);
+      setUiLocked(isLoading);
     }
 
     function resetVisualizationState() {
@@ -971,9 +1001,34 @@
         }
       });
     }
+
+    function setUiLocked(isLocked) {
+      isUiLocked = isLocked;
+
+      const controlPanel = document.getElementById('controlPanel');
+      const panelToggleBtn = document.getElementById('panelToggleBtn');
+      const loadBtn = document.getElementById('loadGaussianScene');
+
+      if (controlPanel) {
+        controlPanel.classList.toggle('ui-locked', isLocked);
+      }
+
+      if (panelToggleBtn) {
+        panelToggleBtn.classList.toggle('ui-locked', isLocked);
+      }
+
+      if (loadBtn) {
+        loadBtn.disabled = isLocked;
+      }
+
+      document.querySelectorAll('#controlPanel button, #controlPanel select').forEach(el => {
+        el.disabled = isLocked;
+      });
+    }
     // =================================
 
     document.getElementById('toggleVolumeAudio').addEventListener('click', function () {
+      if (isUiLocked) return;
       volumeAudio = !volumeAudio;
       this.textContent = volumeAudio ? 'Volume Audio' : 'Point Audio';
     });
@@ -987,6 +1042,7 @@
     // });
     if (hrirBtn) {
       hrirBtn.addEventListener('click', function () {
+        if (isUiLocked) return;
         if (hrirBuffers) {
           useHRIR = !useHRIR;
           this.textContent = useHRIR ? 'HRIR Binaural (ON)' : 'Stereo Panning';
@@ -994,6 +1050,7 @@
       });
     }
     document.getElementById('toggleStaticSourceVisibility').addEventListener('click', () => {
+      if (isUiLocked) return;
       centroidVisible = !centroidVisible;
 
       staticSources.forEach(s => {
@@ -1006,6 +1063,7 @@
       });
     });
     document.getElementById('toggleClusterVisibility').addEventListener('click', () => {
+      if (isUiLocked) return;
       sourceVisible = !sourceVisible;
 
       staticSources.forEach(s => {
@@ -1018,6 +1076,8 @@
       });
     });
     document.getElementById('goToOrigin').addEventListener('click', () => {
+      if (isUiLocked) return;
+
       camera.position.set(0, 0, 0);
       yaw = 0;
       pitch = 0;
@@ -2007,10 +2067,13 @@
     }
 
     playBtn.addEventListener('click', () => {
+      if (isUiLocked) return;
       toggleAudioPlay();
     });
 
     window.addEventListener('keydown', (e) => {
+      if (isUiLocked) return;
+
       if (e.code === 'Space') {
         e.preventDefault();
         toggleAudioPlay();
@@ -2020,6 +2083,8 @@
     // Collapsible panel sections
     document.querySelectorAll('.panel-title[data-target]').forEach(title => {
       title.addEventListener('click', () => {
+        if (isUiLocked) return;
+
         const body = document.getElementById(title.dataset.target);
         const isCollapsed = body.classList.toggle('collapsed');
         title.classList.toggle('collapsed', isCollapsed);
@@ -2029,7 +2094,15 @@
     // Left panel collapse/expand
     const controlPanel = document.getElementById('controlPanel');
     const toggleBtn = document.getElementById('panelToggleBtn');
+    controlPanel.addEventListener('wheel', (e) => {
+      if (isUiLocked) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+    }, { passive: false });
     toggleBtn.addEventListener('click', () => {
+      if (isUiLocked) return;
+
       controlPanel.classList.toggle('panel-collapsed');
       updateLabelRendererClip();
     });
