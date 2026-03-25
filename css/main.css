@@ -929,3 +929,16 @@ html, body {
     font-size: 16px;
     text-align: center;
 }
+
+.demo-note {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    width: 100%;
+    text-align: center;
+    font-size: 16px;
+    color: #ffffff80;
+    margin-top: -8px;
+    margin-bottom: 18px;
+}
