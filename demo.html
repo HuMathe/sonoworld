@@ -1911,13 +1911,11 @@
           hasStartedUpdateLoop = true;
           requestAnimationFrame(update);
         }
+        
+        await loadStaticSourceList(sceneBase, requestId);
+        if (requestId !== sceneLoadRequestId) return;
 
         scheduleMinimapLoad(selectedScene, 0);
-
-        setTimeout(() => {
-          if (requestId !== sceneLoadRequestId) return;
-          void loadStaticSourceList(sceneBase, requestId);
-        }, 100);
 
         setMainLoading(false);
       } catch (err) {
