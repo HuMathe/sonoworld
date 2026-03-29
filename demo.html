@@ -883,7 +883,6 @@
           minimapSceneLoaded = false;
         }
 
-        // 如果这时已经不是最新请求了，就直接退出
         if (requestId !== minimapRequestId) return;
 
         await minimapViewer.addSplatScene(
@@ -898,7 +897,6 @@
           },
         );
 
-        // 只有最新请求才允许生效
         if (requestId !== minimapRequestId) {
           try {
             await minimapViewer.removeSplatScene(0);
@@ -910,7 +908,9 @@
         setMinimapLoading(false);
         console.log('Minimap scene loaded:', selectedScene);
       } catch (err) {
-        setMinimapLoading(false);
+        if (requestId === minimapRequestId) {
+          setMinimapLoading(false);
+        }
         console.error('Failed to load minimap scene:', err);
       }
     }
@@ -1122,18 +1122,37 @@
       });
     }
 
-    async function loadStaticSourceList(basePath) {
+    async function loadStaticSourceList(basePath, requestId) {
+      if (requestId !== sceneLoadRequestId) return;
       if (staticSources.length > 0) {
         staticSources.forEach(s => {
           if (s.srcNode) {
-            s.srcNode.stop();
-            s.srcNode.disconnect();
-            s.gain.disconnect();
-            if (s.stereoPan) s.stereoPan.disconnect();
-            if (s.centroid) scene.remove(s.centroid);
-            if (s.points) scene.remove(s.points);
-            if (s.label) scene.remove(s.label);
+            try { s.srcNode.stop(); } catch (e) {}
+            try { s.srcNode.disconnect(); } catch (e) {}
           }
+          if (s.gain) {
+            try { s.gain.disconnect(); } catch (e) {}
+          }
+          if (s.stereoPan) {
+            try { s.stereoPan.disconnect(); } catch (e) {}
+          }
+          if (s.foaGains) {
+            Object.values(s.foaGains).forEach(node => {
+              try { node.disconnect(); } catch (e) {}
+            });
+          }
+          if (s.hrirConvolvers) {
+            Object.values(s.hrirConvolvers).forEach(node => {
+              try { node.disconnect(); } catch (e) {}
+            });
+          }
+          if (s.binauralMerger) {
+            try { s.binauralMerger.disconnect(); } catch (e) {}
+          }
+
+          if (s.centroid) scene.remove(s.centroid);
+          if (s.points) scene.remove(s.points);
+          if (s.label) scene.remove(s.label);
         });
         staticSources.length = 0;
       }
@@ -1147,6 +1166,7 @@
 
         // Load HRIRs for binaural rendering
         hrirBuffers = await loadHRIRs(audioCtx);
+        if (requestId !== sceneLoadRequestId) return;
         if (hrirBuffers) {
           console.log('HRIR-based binaural rendering enabled');
           // useHRIR = true;
@@ -1171,10 +1191,12 @@
       let list;
       try {
         const response = await fetch(jsonPath, { cache: 'no-store' });
+        if (requestId !== sceneLoadRequestId) return;
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`);
         }
         list = await response.json();
+        if (requestId !== sceneLoadRequestId) return;
       } catch (err) {
         console.log(`Failed to fetch JSON file at ${jsonPath}:`, err);
         return;
@@ -1189,6 +1211,7 @@
         const buf = await fetch(audioDir + audio_path, { cache: 'no-store' })
         .then(r => r.arrayBuffer())
         .then(ab => audioCtx.decodeAudioData(ab));
+        if (requestId !== sceneLoadRequestId) return;
 
         const srcNode     = audioCtx.createBufferSource();
         const gain        = audioCtx.createGain();
@@ -1278,6 +1301,7 @@
         scene.add(src_sphere);
 
         const { points: src_xyzs, color: pointColor } = await loadPlyAsPoints(groundingDir + pcd);
+        if (requestId !== sceneLoadRequestId) return;
         scene.add(src_xyzs);
 
         // Create text label with same color as point cloud
@@ -1510,6 +1534,8 @@
     const clock = new THREE.Clock();
     
     let hasScene = false;
+    let sceneLoadRequestId = 0;
+    let isSceneLoading = false;
 
     const rootElement = document.createElement('div');
     rootElement.style.width = renderWidth + 'px';
@@ -1522,25 +1548,6 @@
     renderer.setSize(renderWidth, renderHeight);
     rootElement.appendChild(renderer.domElement);
 
-    // Create CSS2DRenderer for labels
-    // const labelRenderer = new CSS2DRenderer();
-    // labelRenderer.setSize(renderWidth, renderHeight);
-    // labelRenderer.domElement.style.position = 'absolute';
-    // labelRenderer.domElement.style.top = '0';
-    // labelRenderer.domElement.style.pointerEvents = 'none';
-    // rootElement.appendChild(labelRenderer.domElement);
-    // const labelRenderer = new CSS2DRenderer();
-    // labelRenderer.setSize(renderWidth, renderHeight);
-    // labelRenderer.domElement.id = 'labelRendererLayer';
-    // labelRenderer.domElement.style.position = 'absolute';
-    // labelRenderer.domElement.style.top = '0';
-    // labelRenderer.domElement.style.left = '0';
-    // labelRenderer.domElement.style.width = '100%';
-    // labelRenderer.domElement.style.height = '100%';
-    // labelRenderer.domElement.style.pointerEvents = 'none';
-    // labelRenderer.domElement.style.overflow = 'hidden';
-    // rootElement.appendChild(labelRenderer.domElement);
-    // updateLabelRendererClip();
     const labelRenderer = new CSS2DRenderer();
     labelRenderer.setSize(renderWidth, renderHeight);
     labelRenderer.domElement.id = 'labelRendererLayer';
@@ -1773,7 +1780,7 @@
 
       requestAnimationFrame(update);
 
-      const dt = clock.getDelta();
+      const dt = Math.min(clock.getDelta(), 0.05);
       const speed = 0.5;
       const dir = new THREE.Vector3();
       camera.getWorldDirection(dir);
@@ -1783,18 +1790,28 @@
       camera.position.addScaledVector(right, speed * (move.right - move.left) * dt);
       camera.position.y += speed * (move.up - move.down) * dt;
 
-      velocity.subVectors(camera.position, prevPos).divideScalar(dt);
-      updateStaticSources();
+      if (dt > 1e-6) {
+        velocity.subVectors(camera.position, prevPos).divideScalar(dt);
+      } else {
+        velocity.set(0, 0, 0);
+      }
+
+      if (!isSceneLoading && staticSources.length > 0) {
+        updateStaticSources();
+      }
       prevPos.copy(camera.position);
 
-      viewer.update();
-      viewer.render();
+      if (hasScene) {
+        viewer.update();
+        viewer.render();
+        labelRenderer.render(scene, camera);
+      }
 
-      // Render CSS2D labels
-      labelRenderer.render(scene, camera);
-
-      // Update minimap
-      drawMinimap();
+      if (minimapSceneLoaded) {
+        drawMinimap();
+      } else {
+        minimapCtx.clearRect(0, 0, minimapCanvas2D.width, minimapCanvas2D.height);
+      }
 
       const cbEnd = performance.now();   // ==== NEW: callback 计时结束 ====
       const cbDur = cbEnd - cbStart;    // 本帧 update 执行耗时 (ms)
@@ -1836,152 +1853,45 @@
       }
     }
 
-    // document.getElementById('loadGaussianScene').addEventListener('click', function () {
     document.getElementById('loadGaussianScene').addEventListener('click', async function () {
-      const selectedScene = document.getElementById('GsceneSelect').value + '/3d/gaussian.compressed.ply';
+      if (isSceneLoading) return;
+      isSceneLoading = true;
+
+      const requestId = ++sceneLoadRequestId;
+      const sceneBase = document.getElementById('GsceneSelect').value;
+      const selectedScene = sceneBase + '/3d/gaussian.compressed.ply';
       const controlPanel = document.getElementById('controlPanel');
+
       if (controlPanel) {
         controlPanel.scrollTop = 0;
       }
-      stopCurrentSceneAudio();
-      setMainLoading(true);
-      await clearMinimapScene();
-      resetVisualizationState();
-      setMinimapLoading(true);
 
-      // Reset camera to origin when loading new scene
-      camera.position.set(0, 0, 0);
-      yaw = 0;
-      pitch = 0;
-      camera.rotation.order = 'YXZ';
-      camera.rotation.y = yaw;
-      camera.rotation.x = pitch;
-      prevPos.copy(camera.position);
+      try {
+        stopCurrentSceneAudio();
+        setMainLoading(true);
+        setMinimapLoading(true);
 
-      // Load scene into main viewer
-      // if (hasScene) {
-      //   viewer.removeSplatScene(0).then(()=>{
-      //     hasScene = false;
-      //     console.log('Scene removed successfully');
-      //     hasScene = true;
-      //     viewer.addSplatScene(
-      //       selectedScene,
-      //       {
-      //         'splatAlphaRemovalThreshold': 5,
-      //         'showLoadingUI': true,
-      //         'position': [0, 0, 0],
-      //         'rotation': [1, 0, 0, 0],
-      //         'scale': [1.0, 1.0, 1.0],
-      //         'progressiveLoad': false,
-      //       },
-      //     );
-      //   }).catch((err)=>{
-      //     console.error('Failed to remove scene:', err);
-      //   });
-      // } else {
-      //   hasScene = true;
-      //   viewer.addSplatScene(
-      //     selectedScene,
-      //     {
-      //       'splatAlphaRemovalThreshold': 5,
-      //       'showLoadingUI': true,
-      //       'position': [0, 0, 0],
-      //       'rotation': [1, 0, 0, 0],
-      //       'scale': [1.0, 1.0, 1.0],
-      //       'progressiveLoad': false,
-      //     },
-      //   ).then(()=>{
-      //     requestAnimationFrame(update);
-      //   });
-      // }
+        await clearMinimapScene();
+        if (requestId !== sceneLoadRequestId) return;
 
-      // Load scene into main viewer
-      if (hasScene) {
-        viewer.removeSplatScene(0).then(() => {
+        resetVisualizationState();
+
+        camera.position.set(0, 0, 0);
+        yaw = 0;
+        pitch = 0;
+        camera.rotation.order = 'YXZ';
+        camera.rotation.y = yaw;
+        camera.rotation.x = pitch;
+        prevPos.copy(camera.position);
+
+        if (hasScene) {
+          await viewer.removeSplatScene(0);
+          if (requestId !== sceneLoadRequestId) return;
           hasScene = false;
           console.log('Scene removed successfully');
+        }
 
-          hasScene = true;
-          // viewer.addSplatScene(
-          //   selectedScene,
-          //   {
-          //     splatAlphaRemovalThreshold: 5,
-          //     showLoadingUI: true,
-          //     position: [0, 0, 0],
-          //     rotation: [1, 0, 0, 0],
-          //     scale: [1.0, 1.0, 1.0],
-          //     progressiveLoad: false,
-          //   },
-          // ).then(() => {
-          //   // requestAnimationFrame(update);
-          //   setMainLoading(false);
-          //   if (!hasStartedUpdateLoop) {
-          //     hasStartedUpdateLoop = true;
-          //     requestAnimationFrame(update);
-          //   }
-          //   scheduleMinimapLoad(selectedScene, 800);
-          // }).catch((err) => {
-          //   setMainLoading(false);
-          //   console.error('Failed to load scene:', err);
-          // });
-          viewer.addSplatScene(
-            selectedScene,
-            {
-              splatAlphaRemovalThreshold: 5,
-              showLoadingUI: true,
-              position: [0, 0, 0],
-              rotation: [1, 0, 0, 0],
-              scale: [1.0, 1.0, 1.0],
-              progressiveLoad: false,
-            },
-          ).then(() => {
-            setMainLoading(false);
-
-            if (!hasStartedUpdateLoop) {
-              hasStartedUpdateLoop = true;
-              requestAnimationFrame(update);
-            }
-
-            scheduleMinimapLoad(selectedScene, 800);
-
-            const sceneBase = document.getElementById('GsceneSelect').value;
-            setTimeout(() => {
-              void loadStaticSourceList(sceneBase);
-            }, 100);
-          }).catch((err) => {
-            setMainLoading(false);
-            console.error('Failed to load scene:', err);
-          });
-        }).catch((err) => {
-          setMainLoading(false);
-          console.error('Failed to remove scene:', err);
-        });
-      } else {
-        hasScene = true;
-        // viewer.addSplatScene(
-        //   selectedScene,
-        //   {
-        //     splatAlphaRemovalThreshold: 5,
-        //     showLoadingUI: true,
-        //     position: [0, 0, 0],
-        //     rotation: [1, 0, 0, 0],
-        //     scale: [1.0, 1.0, 1.0],
-        //     progressiveLoad: false,
-        //   },
-        // ).then(() => {
-        //   // requestAnimationFrame(update);
-        //   setMainLoading(false);
-        //   if (!hasStartedUpdateLoop) {
-        //     hasStartedUpdateLoop = true;
-        //     requestAnimationFrame(update);
-        //   }
-        //   scheduleMinimapLoad(selectedScene, 800);
-        // }).catch((err) => {
-        //   setMainLoading(false);
-        //   console.error('Failed to load scene:', err);
-        // });
-
-        viewer.addSplatScene(
+        await viewer.addSplatScene(
           selectedScene,
           {
             splatAlphaRemovalThreshold: 5,
@@ -1991,62 +1901,38 @@
             scale: [1.0, 1.0, 1.0],
             progressiveLoad: false,
           },
-        ).then(() => {
+        );
+
+        if (requestId !== sceneLoadRequestId) return;
+
+        hasScene = true;
+
+        if (!hasStartedUpdateLoop) {
+          hasStartedUpdateLoop = true;
+          requestAnimationFrame(update);
+        }
+
+        scheduleMinimapLoad(selectedScene, 0);
+
+        setTimeout(() => {
+          if (requestId !== sceneLoadRequestId) return;
+          void loadStaticSourceList(sceneBase, requestId);
+        }, 100);
+
+        setMainLoading(false);
+      } catch (err) {
+        if (requestId === sceneLoadRequestId) {
+          hasScene = false;
           setMainLoading(false);
-
-          if (!hasStartedUpdateLoop) {
-            hasStartedUpdateLoop = true;
-            requestAnimationFrame(update);
-          }
-
-          scheduleMinimapLoad(selectedScene, 800);
-
-          const sceneBase = document.getElementById('GsceneSelect').value;
-          setTimeout(() => {
-            void loadStaticSourceList(sceneBase);
-          }, 100);
-        }).catch((err) => {
-          setMainLoading(false);
-          console.error('Failed to load scene:', err);
-        });
+          setMinimapLoading(false);
+        }
+        console.error('Failed to load scene:', err);
+      } finally {
+        if (requestId === sceneLoadRequestId) {
+          isSceneLoading = false;
+        }
       }
-
-      // Load same scene into minimap viewer
-      // if (minimapSceneLoaded) {
-      //   minimapViewer.removeSplatScene(0).then(() => {
-      //     minimapSceneLoaded = false;
-      //     minimapViewer.addSplatScene(
-      //       selectedScene,
-      //       {
-      //         'splatAlphaRemovalThreshold': 5,
-      //         'showLoadingUI': false,
-      //         'position': [0, 0, 0],
-      //         'rotation': [1, 0, 0, 0],
-      //         'scale': [1.0, 1.0, 1.0],
-      //         'progressiveLoad': false,
-      //       },
-      //     ).then(() => {
-      //       minimapSceneLoaded = true;
-      //     });
-      //   });
-      // } else {
-      //   minimapViewer.addSplatScene(
-      //     selectedScene,
-      //     {
-      //       'splatAlphaRemovalThreshold': 5,
-      //       'showLoadingUI': false,
-      //       'position': [0, 0, 0],
-      //       'rotation': [1, 0, 0, 0],
-      //       'scale': [1.0, 1.0, 1.0],
-      //       'progressiveLoad': false,
-      //     },
-      //   ).then(() => {
-      //     minimapSceneLoaded = true;
-      //   });
-      // }
-
-      // loadStaticSourceList(document.getElementById('GsceneSelect').value);
-    });  
+    });
 
     const playBtn = document.getElementById('togglePlay');
 
