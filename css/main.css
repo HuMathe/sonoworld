@@ -942,3 +942,23 @@ html, body {
     margin-top: -8px;
     margin-bottom: 18px;
 }
+
+#links a {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+}
+
+.link-svg-icon {
+    width: 1em;
+    height: 1em;
+    flex: 0 0 auto;
+    vertical-align: -0.125em;
+}
+
+#vr-demo .link-svg-icon {
+    width: 1.3em;
+    height: 1.3em;
+    flex: 0 0 auto;
+    vertical-align: -0.22em;
+}
