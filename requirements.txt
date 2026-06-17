@@ -8,3 +8,4 @@ gsplat==1.5.3
 plyfile==1.1.2
 pycocotools==2.0.8
 decord==0.6.0
+torchcodec==0.10.0

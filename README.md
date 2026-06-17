@@ -22,8 +22,8 @@ Use `--resume` to continue a partially completed scene and `--force` to rerun co
 
 ## News and Planned TODOs
 
+- [x] `06.17.2026` Environment setup instructions
 - [x] `06.02.2026` Released generation code
-- [ ] Environment setup instructions
 - [ ] SonoScene360 dataset
 - [ ] Rendering code, evaluation tools, interactive viewer, and additional examples
 - [ ] Support for generation with open-source backbones, specifically HunyuanWorld 1.0 and LLaVA
@@ -66,6 +66,7 @@ Install the remaining dependencies:
 ```bash
 pip install -r requirements.txt
 pip install --force-reinstall "setuptools<82"
+conda install -c conda-forge ffmpeg
 ```
 
 ## Citation
