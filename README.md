@@ -69,6 +69,11 @@ pip install --force-reinstall "setuptools<82"
 conda install -c conda-forge ffmpeg
 ```
 
+Export your OpenAI api_key (to use GPT-5 for sounding category proposal):
+```bash
+export OPENAI_API_KEY='your_api_key_here'
+```
+
 ## Citation
 If you find our work useful, please cite:
 ```
