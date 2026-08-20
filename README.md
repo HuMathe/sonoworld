@@ -3,9 +3,14 @@
 > Official implementation of the CVPR 2026 paper _"SonoWorld: From One Image to a 3D Audio-Visual Scene."_
 > 
 
+[![Paper](https://img.shields.io/badge/arXiv-2603.28757-CC3355?style=for-the-badge&logo=arxiv&logoColor=white&labelColor=333333)](https://arxiv.org/abs/2603.28757)
+[![Project Website](https://img.shields.io/badge/Project-Website-3E7CB1?style=for-the-badge&logo=googlechrome&logoColor=white&labelColor=333333)](https://humathe.github.io/sonoworld/)
+[![Demo](https://img.shields.io/badge/Demo-Try%20it-4CAF7D?style=for-the-badge&logo=rocket&logoColor=white&labelColor=333333)](https://humathe.github.io/sonoworld/demo.html)
+[![Hugging Face](https://img.shields.io/badge/Dataset-SonoScene360-F2B84B?style=for-the-badge&logo=huggingface&logoColor=white&labelColor=333333)](https://huggingface.co/datasets/DerongJin/SonoScene360)
+
 **TL;DR** Given a single input image, SonoWorld generates a 3D audio-visual scene with spatialized sound and scene-level assets.
 
-Dataset and full setup instructions are coming soon.
+<span style="color:#FF7A1A">(New)</span> The SonoScene360 dataset is now available at [https://huggingface.co/datasets/DerongJin/SonoScene360](https://huggingface.co/datasets/DerongJin/SonoScene360).
 
 
 ## Quick Start
@@ -22,9 +27,9 @@ Use `--resume` to continue a partially completed scene and `--force` to rerun co
 
 ## News and Planned TODOs
 
+- [x] `08.19.2026` Released [SonoScene360 dataset](https://huggingface.co/datasets/DerongJin/SonoScene360)
 - [x] `06.17.2026` Environment setup instructions
 - [x] `06.02.2026` Released generation code
-- [ ] SonoScene360 dataset
 - [ ] Rendering code, evaluation tools, interactive viewer, and additional examples
 - [ ] Support for generation with open-source backbones, specifically HunyuanWorld 1.0 and LLaVA
 
