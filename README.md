@@ -36,6 +36,16 @@ python generate.py \
     --input_panorama /path/to/panorama.jpg
 ```
 
+### Interactive viewer
+
+From the repository root, start the local HTTP server:
+
+```bash
+python server_setup.py 8000
+```
+
+Then open [http://localhost:8000/viewer.html](http://localhost:8000/viewer.html), select or enter a scene output root such as `outputs/fountain-multi`, and click **Load Scene**.
+
 ## Evaluation on SonoScene360 Dataset
 
 ### 1. Download
@@ -62,10 +72,10 @@ bash eval_sonoscene360.sh
 
 ## News and Planned TODOs
 
+- [x] `08.29.2026` Released rendering code, evaluation tools, interactive viewer, and additional examples
 - [x] `08.19.2026` Released [SonoScene360 dataset](https://huggingface.co/datasets/DerongJin/SonoScene360)
 - [x] `06.17.2026` Environment setup instructions
 - [x] `06.02.2026` Released generation code
-- [ ] Rendering code, evaluation tools, interactive viewer, and additional examples
 - [ ] Support for generation with open-source backbones, specifically HunyuanWorld 1.0 and LLaVA
 
 ## Installation
