@@ -3,11 +3,38 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional, Literal
 
+from sonoworld.utils.text_utils import clean_text
+
 from .common import SerializableDataclass
 
 
 SourceType = Literal["point", "area", "background"]
 GroundingLabel = str
+
+
+def normalize_known_sources(value: Any) -> List[str]:
+    """Validate and normalize the public SonoScene360 known-source format."""
+    if isinstance(value, dict):
+        value = value.get("known_sources")
+    if value is None:
+        return []
+    if not isinstance(value, list):
+        raise TypeError('Known sources must have the form {"known_sources": ["..."]}.')
+
+    labels: List[str] = []
+    seen = set()
+    for item in value:
+        if not isinstance(item, str):
+            raise TypeError("Every known source must be a string.")
+        label = clean_text(item)
+        if not label:
+            raise ValueError("Known-source labels cannot be empty.")
+        key = label.casefold()
+        if key in seen:
+            continue
+        seen.add(key)
+        labels.append(label)
+    return labels
 
 
 @dataclass

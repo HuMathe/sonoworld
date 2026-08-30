@@ -67,6 +67,10 @@ class MMAudioGenerationStage(Stage):
             raise FileNotFoundError(
                 f"Missing understanding metadata: {paths.understanding_metadata}"
             )
+        if not paths.segmentation_summary.exists():
+            raise FileNotFoundError(
+                f"Missing segmentation summary: {paths.segmentation_summary}"
+            )
 
         understanding_payload = read_json(paths.understanding_metadata)
         if isinstance(understanding_payload, list):
@@ -78,6 +82,9 @@ class MMAudioGenerationStage(Stage):
                 "Understanding metadata must be a JSON object or a legacy item list."
             )
         prompt_items = self._understanding_audio_items(understanding)
+        segmentation = read_json(paths.segmentation_summary)
+        instances_by_label = self._segmentation_instances_by_label(segmentation)
+        generation_targets = self._generation_targets(prompt_items, instances_by_label)
         num_candidates = max(1, int(stage_cfg.get("num_candidates", self.num_candidates)))
         seconds_total = float(stage_cfg.get("seconds_total", self.seconds_total))
         negative_prompt = str(
@@ -99,16 +106,35 @@ class MMAudioGenerationStage(Stage):
             summary_path = save_audio_summary(paths, summary)
             return self._make_stage_result(ctx, summary_path, summary, prompt_count=0)
 
+        if not generation_targets:
+            summary = AudioGenerationSummary(
+                items=[],
+                sample_rate=int(stage_cfg.get("sample_rate", self.sample_rate or 44100)),
+                default_duration_sec=seconds_total,
+                backend=self.backend,
+                model=str(stage_cfg.get("model_variant", self.model_variant)),
+                metadata={"message": "No segmented audio instances were found."},
+            )
+            summary_path = save_audio_summary(paths, summary)
+            return self._make_stage_result(
+                ctx,
+                summary_path,
+                summary,
+                prompt_count=len(prompt_items),
+            )
+
         model = self._get_model(ctx, stage_cfg, seconds_total=seconds_total)
         model_sample_rate = self._model_sample_rate(model)
         target_sample_rate = int(stage_cfg.get("sample_rate", self.sample_rate or model_sample_rate))
 
         items: List[AudioItem] = []
-        for prompt_id, prompt_item in enumerate(prompt_items):
+        for target in generation_targets:
             item = self._generate_item(
                 model=model,
-                prompt_item=prompt_item,
-                prompt_id=prompt_id,
+                prompt_item=target["prompt_item"],
+                prompt_id=target["prompt_id"],
+                instance=target["instance"],
+                instance_index=target["instance_index"],
                 num_candidates=num_candidates,
                 model_sample_rate=model_sample_rate,
                 target_sample_rate=target_sample_rate,
@@ -138,6 +164,8 @@ class MMAudioGenerationStage(Stage):
         model: Any,
         prompt_item: Dict[str, Any],
         prompt_id: int,
+        instance: Optional[Dict[str, Any]],
+        instance_index: Optional[int],
         num_candidates: int,
         model_sample_rate: int,
         target_sample_rate: int,
@@ -156,9 +184,16 @@ class MMAudioGenerationStage(Stage):
         peak_db = float(prompt_item["peak_db"])
         diffusion_prompt = prompt_item["diffusion_prompt"]
         apply_peak_gain = bool(stage_cfg.get("apply_peak_gain", self.apply_peak_gain))
+        instance_id = clean_text(instance.get("instance_id")) if instance is not None else ""
 
         slug = slug_text(grounding_label, default="audio")
-        audio_id = f"audio_{prompt_id:02d}_{slug}"
+        if instance_id:
+            instance_slug = slug_text(instance_id, default=f"instance_{instance_index or 0}")
+            file_stem = f"{prompt_id}_{slug}_{instance_slug}"
+            audio_id = f"audio_{prompt_id:02d}_{slug}_{instance_slug}"
+        else:
+            file_stem = f"{prompt_id}_{slug}"
+            audio_id = f"audio_{prompt_id:02d}_{slug}"
         candidates: List[AudioCandidate] = []
 
         for candidate_index in range(num_candidates):
@@ -177,7 +212,7 @@ class MMAudioGenerationStage(Stage):
                     new_freq=target_sample_rate,
                 )
 
-            audio_path = paths.audio_assets / f"{prompt_id}_{slug}_{candidate_index}.wav"
+            audio_path = paths.audio_assets / f"{file_stem}_{candidate_index}.wav"
             torchaudio.save(audio_path, audio.cpu(), sample_rate=target_sample_rate)
             duration_sec = float(audio.shape[-1]) / float(target_sample_rate)
 
@@ -202,6 +237,7 @@ class MMAudioGenerationStage(Stage):
             primary=primary,
             candidates=candidates,
             prompt_id=prompt_id,
+            instance_id=instance_id or None,
             negative_prompt=negative_prompt,
             backend=self.backend,
             model=str(stage_cfg.get("model_variant", self.model_variant)),
@@ -209,6 +245,7 @@ class MMAudioGenerationStage(Stage):
                 "duration_requested_sec": seconds_total,
                 "apply_peak_gain": apply_peak_gain,
                 "source": prompt_item.get("source", "understanding"),
+                "instance_index": instance_index,
             },
         )
 
@@ -352,6 +389,62 @@ class MMAudioGenerationStage(Stage):
 
         return items
 
+    def _segmentation_instances_by_label(
+        self,
+        segmentation: Dict[str, Any],
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        grouped: Dict[str, List[Dict[str, Any]]] = {}
+        instances = segmentation.get("instances", [])
+        if not isinstance(instances, list):
+            return grouped
+
+        for instance in instances:
+            if not isinstance(instance, dict):
+                continue
+            label = clean_text(instance.get("class_label"))
+            instance_id = clean_text(instance.get("instance_id"))
+            if not label or not instance_id:
+                continue
+            grouped.setdefault(label, []).append(instance)
+        return grouped
+
+    def _generation_targets(
+        self,
+        prompt_items: List[Dict[str, Any]],
+        instances_by_label: Dict[str, List[Dict[str, Any]]],
+    ) -> List[Dict[str, Any]]:
+        targets: List[Dict[str, Any]] = []
+        for prompt_id, prompt_item in enumerate(prompt_items):
+            grounding_label = clean_text(prompt_item.get("grounding_label"))
+            source_type = normalize_audio_source_type(
+                prompt_item.get("source_type"),
+                grounding_label,
+            )
+
+            if grounding_label.lower() == "global" or source_type == "background":
+                targets.append(
+                    {
+                        "prompt_id": prompt_id,
+                        "prompt_item": prompt_item,
+                        "instance": None,
+                        "instance_index": None,
+                    }
+                )
+                continue
+
+            for instance_index, instance in enumerate(
+                instances_by_label.get(grounding_label, [])
+            ):
+                targets.append(
+                    {
+                        "prompt_id": prompt_id,
+                        "prompt_item": prompt_item,
+                        "instance": instance,
+                        "instance_index": instance_index,
+                    }
+                )
+        return targets
+
     def _make_stage_result(
         self,
         ctx: StageContext,
@@ -378,6 +471,12 @@ class MMAudioGenerationStage(Stage):
                     ctx.paths.understanding_metadata,
                     ctx.scene_root,
                     role="understanding_metadata",
+                    media_type="application/json",
+                ),
+                "segmentation": ref(
+                    ctx.paths.segmentation_summary,
+                    ctx.scene_root,
+                    role="segmentation_summary",
                     media_type="application/json",
                 ),
             },

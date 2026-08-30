@@ -39,6 +39,7 @@ class AudioItem(SerializableDataclass):
     candidates: List[AudioCandidate] = field(default_factory=list)
 
     prompt_id: Optional[int] = None
+    instance_id: Optional[str] = None
     negative_prompt: Optional[str] = None
 
     backend: Optional[str] = None

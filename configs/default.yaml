@@ -11,7 +11,8 @@ stages:
   understanding:
     enabled: true
     class_path: sonoworld.stages.understanding.gpt.GPTUnderstandingStage
-    model: gpt-4.1
+    model: gpt-5
+    known_sources_path: null
 
   visual_scene:
     enabled: true

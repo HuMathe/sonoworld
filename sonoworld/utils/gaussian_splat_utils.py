@@ -392,3 +392,213 @@ def render_marble_panorama_depth(
         )
 
     return depth
+
+
+def marble_to_panorama_transform() -> Any:
+    """Return the homogeneous transform used by the internal mic renderer."""
+    import numpy as np
+
+    front_marble = np.asarray([0, 0, 1], dtype=np.float32)
+    right_marble = np.asarray([1, 0, 0], dtype=np.float32)
+    up_marble = np.asarray([0, -1, 0], dtype=np.float32)
+    front_panorama = np.asarray([-1, 0, 0], dtype=np.float32)
+    right_panorama = np.asarray([0, 1, 0], dtype=np.float32)
+    up_panorama = np.asarray([0, 0, 1], dtype=np.float32)
+    marble_basis = np.stack([front_marble, right_marble, up_marble], axis=0)
+    panorama_basis = np.stack([front_panorama, right_panorama, up_panorama], axis=0)
+    transform = np.eye(4, dtype=np.float32)
+    transform[:3, :3] = panorama_basis.T @ marble_basis
+    return transform
+
+
+def _opencv_cubemap_viewmats(world_to_camera: Any, device: Any) -> Any:
+    """Compose six OpenCV cubemap faces with an arbitrary base camera pose."""
+    import torch
+
+    # Each matrix maps base OpenCV camera coordinates into one face camera.
+    # Face order agrees with ``cubemap_to_equirect``.
+    relative = torch.tensor(
+        [
+            [[1, 0, 0], [0, 1, 0], [0, 0, 1]],       # front
+            [[-1, 0, 0], [0, 1, 0], [0, 0, -1]],     # back
+            [[0, 0, -1], [0, 1, 0], [1, 0, 0]],      # right
+            [[0, 0, 1], [0, 1, 0], [-1, 0, 0]],      # left
+            [[1, 0, 0], [0, 0, 1], [0, -1, 0]],      # up
+            [[1, 0, 0], [0, 0, -1], [0, 1, 0]],      # down
+        ],
+        dtype=torch.float32,
+        device=device,
+    )
+    relative_h = torch.eye(4, dtype=torch.float32, device=device).unsqueeze(0).repeat(6, 1, 1)
+    relative_h[:, :3, :3] = relative
+    base = torch.as_tensor(world_to_camera, dtype=torch.float32, device=device).unsqueeze(0)
+    return relative_h @ base
+
+
+def render_marble_pinhole_view(
+    ply_path: str | Path,
+    world_to_camera_panorama: Any,
+    rgb_out_path: str | Path,
+    depth_out_path: str | Path | None = None,
+    depth_vis_out_path: str | Path | None = None,
+    width: int = 1024,
+    height: int = 1024,
+    focal_length: float | None = None,
+    device: str | None = "cuda",
+    near_plane: float = 0.4,
+    far_plane: float = 1000.0,
+    panorama_rgb_out_path: str | Path | None = None,
+    panorama_depth_out_path: str | Path | None = None,
+    panorama_depth_vis_out_path: str | Path | None = None,
+    panorama_width: int = 2048,
+    cube_map_width: int = 512,
+) -> dict[str, Any]:
+    """Rasterize a Marble Gaussian scene from a SonoScene360 mic pose.
+
+    ``world_to_camera_panorama`` maps panorama-world coordinates into an
+    OpenCV camera.  Marble Gaussians use a different world basis, so the basis
+    transform is composed before calling gsplat.  The function writes both the
+    view and its expected-depth audit assets.
+    """
+    import numpy as np
+    from PIL import Image
+    import torch
+
+    if width <= 0 or height <= 0:
+        raise ValueError(f"Invalid render size {width}x{height}")
+    device_obj = _resolve_device(device)
+    rasterization = _import_rasterization()
+    gaussians = load_gsplat_scene_from_ply(ply_path, device=device_obj, force_rgb=True)
+
+    world_to_camera = np.asarray(world_to_camera_panorama, dtype=np.float32)
+    if world_to_camera.shape != (4, 4):
+        raise ValueError(f"Expected a 4x4 world-to-camera matrix, got {world_to_camera.shape}")
+    world_to_camera_marble = world_to_camera @ marble_to_panorama_transform()
+    viewmats = torch.as_tensor(world_to_camera_marble, device=device_obj).unsqueeze(0)
+    focal = float(focal_length) if focal_length is not None else float(max(width, height)) / 2.0
+    intrinsics = torch.tensor(
+        [[focal, 0.0, width / 2.0], [0.0, focal, height / 2.0], [0.0, 0.0, 1.0]],
+        dtype=torch.float32,
+        device=device_obj,
+    ).unsqueeze(0)
+    kwargs = {
+        "means": gaussians["means"],
+        "quats": gaussians["quats"],
+        "scales": gaussians["scales"],
+        "opacities": gaussians["opacities"],
+        "colors": gaussians["colors"],
+        "sh_degree": gaussians["sh_degree"],
+        "width": width,
+        "height": height,
+        "render_mode": "RGB+ED",
+        "viewmats": viewmats,
+        "Ks": intrinsics,
+        "near_plane": near_plane,
+        "far_plane": far_plane,
+        "camera_model": "pinhole",
+        "rasterize_mode": "antialiased",
+    }
+    with torch.inference_mode():
+        try:
+            renders, alphas, _ = rasterization(**kwargs)
+        except TypeError:
+            kwargs.pop("rasterize_mode", None)
+            try:
+                renders, alphas, _ = rasterization(**kwargs)
+            except TypeError:
+                kwargs.pop("camera_model", None)
+                renders, alphas, _ = rasterization(**kwargs)
+
+    render = renders[0].detach().cpu().numpy().astype(np.float32)
+    alpha = alphas[0].detach().cpu().numpy().astype(np.float32)
+    rgb = np.clip(render[..., :3], 0.0, 1.0)
+    depth = np.nan_to_num(render[..., 3], nan=0.0, posinf=far_plane, neginf=0.0)
+
+    rgb_out_path = Path(rgb_out_path)
+    rgb_out_path.parent.mkdir(parents=True, exist_ok=True)
+    Image.fromarray((rgb * 255.0).astype(np.uint8)).save(rgb_out_path, quality=95)
+    if depth_out_path is not None:
+        depth_out_path = Path(depth_out_path)
+        depth_out_path.parent.mkdir(parents=True, exist_ok=True)
+        np.save(depth_out_path, depth.astype(np.float32))
+    if depth_vis_out_path is not None:
+        valid = np.isfinite(depth) & (depth > near_plane) & (alpha[..., 0] > 1.0e-4)
+        disparity = np.zeros_like(depth, dtype=np.float32)
+        disparity[valid] = 1.0 / depth[valid]
+        colors = (_turbo_colormap(_robust_normalize(disparity, valid)) * 255).astype(np.uint8)
+        depth_vis_out_path = Path(depth_vis_out_path)
+        depth_vis_out_path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray(colors).save(depth_vis_out_path, quality=95)
+
+    panorama_metadata = None
+    if panorama_rgb_out_path is not None:
+        cubemap_viewmats = _opencv_cubemap_viewmats(world_to_camera_marble, device_obj)
+        cubemap_intrinsics = torch.tensor(
+            [
+                [cube_map_width / 2.0, 0.0, cube_map_width / 2.0],
+                [0.0, cube_map_width / 2.0, cube_map_width / 2.0],
+                [0.0, 0.0, 1.0],
+            ],
+            dtype=torch.float32,
+            device=device_obj,
+        ).unsqueeze(0).repeat(6, 1, 1)
+        panorama_kwargs = {
+            **{key: kwargs[key] for key in ("means", "quats", "scales", "opacities", "colors", "sh_degree")},
+            "width": cube_map_width,
+            "height": cube_map_width,
+            "render_mode": "RGB+ED",
+            "viewmats": cubemap_viewmats,
+            "Ks": cubemap_intrinsics,
+            "near_plane": near_plane,
+            "far_plane": far_plane,
+            "camera_model": "pinhole",
+            "rasterize_mode": "antialiased",
+        }
+        with torch.inference_mode():
+            try:
+                cubemap, _, _ = rasterization(**panorama_kwargs)
+            except TypeError:
+                panorama_kwargs.pop("rasterize_mode", None)
+                try:
+                    cubemap, _, _ = rasterization(**panorama_kwargs)
+                except TypeError:
+                    panorama_kwargs.pop("camera_model", None)
+                    cubemap, _, _ = rasterization(**panorama_kwargs)
+            panorama = cubemap_to_equirect(cubemap, panorama_width)
+        panorama_array = panorama.detach().cpu().numpy().astype(np.float32)
+        panorama_rgb = np.clip(panorama_array[..., :3], 0.0, 1.0)
+        panorama_depth = np.nan_to_num(
+            panorama_array[..., 3], nan=0.0, posinf=far_plane, neginf=0.0
+        )
+        panorama_rgb_out_path = Path(panorama_rgb_out_path)
+        panorama_rgb_out_path.parent.mkdir(parents=True, exist_ok=True)
+        Image.fromarray((panorama_rgb * 255.0).astype(np.uint8)).save(
+            panorama_rgb_out_path, quality=95
+        )
+        if panorama_depth_out_path is not None:
+            panorama_depth_out_path = Path(panorama_depth_out_path)
+            panorama_depth_out_path.parent.mkdir(parents=True, exist_ok=True)
+            np.save(panorama_depth_out_path, panorama_depth.astype(np.float32))
+        if panorama_depth_vis_out_path is not None:
+            panorama_valid = np.isfinite(panorama_depth) & (panorama_depth > near_plane)
+            panorama_disparity = np.zeros_like(panorama_depth, dtype=np.float32)
+            panorama_disparity[panorama_valid] = 1.0 / panorama_depth[panorama_valid]
+            panorama_colors = (
+                _turbo_colormap(_robust_normalize(panorama_disparity, panorama_valid)) * 255
+            ).astype(np.uint8)
+            panorama_depth_vis_out_path = Path(panorama_depth_vis_out_path)
+            panorama_depth_vis_out_path.parent.mkdir(parents=True, exist_ok=True)
+            Image.fromarray(panorama_colors).save(panorama_depth_vis_out_path, quality=95)
+        panorama_metadata = {
+            "width": panorama_width,
+            "height": panorama_width // 2,
+            "cube_map_width": cube_map_width,
+        }
+
+    return {
+        "world_to_camera_marble": world_to_camera_marble.tolist(),
+        "width": width,
+        "height": height,
+        "focal_length": focal,
+        "panorama": panorama_metadata,
+    }

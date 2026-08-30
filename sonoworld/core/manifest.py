@@ -184,12 +184,21 @@ class SceneManifest(SerializableDataclass):
         name: str,
         backend: Optional[str] = None,
         message: Optional[str] = None,
+        inputs: Optional[Dict[str, FileRef]] = None,
+        outputs: Optional[Dict[str, FileRef]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> None:
         record = self.get_stage(name)
         record.status = "skipped"
         record.backend = backend
         record.message = message
         record.error = None
+        if inputs is not None:
+            record.inputs = inputs
+        if outputs is not None:
+            record.outputs = outputs
+        if metadata is not None:
+            record.metadata.update(metadata)
 
     def is_done(self, name: str) -> bool:
         return self.stages.get(name) is not None and self.stages[name].status == "done"

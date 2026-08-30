@@ -9,3 +9,7 @@ plyfile==1.1.2
 pycocotools==2.0.8
 decord==0.6.0
 torchcodec==0.10.0
+numpy==1.26.0
+scipy>=1.15,<2
+soundfile>=0.12.1
+laion-clap==1.1.7

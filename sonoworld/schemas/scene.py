@@ -12,6 +12,7 @@ class SceneInput(SerializableDataclass):
 
     input_image: Optional[FileRef] = None
     panorama: Optional[FileRef] = None
+    known_sources: Optional[FileRef] = None
     mask: Optional[FileRef] = None
 
     metadata: Dict[str, Any] = field(default_factory=dict)

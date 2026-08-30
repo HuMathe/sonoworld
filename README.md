@@ -25,6 +25,41 @@ python generate.py \
 
 Use `--resume` to continue a partially completed scene and `--force` to rerun completed stages.
 
+### Panorama input
+
+Use a complete 2:1 equirectangular panorama as input:
+
+```bash
+python generate.py \
+    --scene_root outputs/fountain-multi \
+    --config configs/default.yaml \
+    --input_panorama /path/to/panorama.jpg
+```
+
+## Evaluation on SonoScene360 Dataset
+
+### 1. Download
+
+```bash
+hf download DerongJin/SonoScene360 \
+    --repo-type dataset \
+    --local-dir SonoScene360
+```
+
+### 2. Generate
+
+```bash
+# Set SONOSCENE360_ROOT in generate_all_sonoscene360.sh, then run:
+bash generate_all_sonoscene360.sh
+```
+
+### 3. Evaluate
+
+```bash
+# Set SONOSCENE360_ROOT in eval_sonoscene360.sh, then run:
+bash eval_sonoscene360.sh
+```
+
 ## News and Planned TODOs
 
 - [x] `08.19.2026` Released [SonoScene360 dataset](https://huggingface.co/datasets/DerongJin/SonoScene360)

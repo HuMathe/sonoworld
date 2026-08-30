@@ -27,6 +27,10 @@ class ScenePaths:
         return self.inputs / "panorama.png"
 
     @property
+    def known_sources(self) -> Path:
+        return self.inputs / "known_sources.json"
+
+    @property
     def outpainting(self) -> Path:
         return self.root / "outpainting"
 

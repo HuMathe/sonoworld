@@ -85,10 +85,18 @@ class PointClusterOmniSpatializationStage(Stage):
                 continue
 
             for instance_index, instance in enumerate(label_instances):
+                instance_id = str(instance.get("instance_id", instance_index))
+                instance_candidates = self._audio_candidates_for_instance(
+                    candidates,
+                    instance_id,
+                )
+                if not instance_candidates:
+                    continue
+
                 mask = self._load_instance_mask(instance, ctx, depth.shape)
                 source_ids: List[str] = []
 
-                for audio_item in candidates:
+                for audio_item in instance_candidates:
                     source_type = normalize_audio_source_type(
                         audio_item.get("source_type"),
                         audio_item.get("grounding_label", label),
@@ -388,6 +396,28 @@ class PointClusterOmniSpatializationStage(Stage):
                 continue
             grouped.setdefault(label, []).append(item)
         return grouped
+
+    def _audio_candidates_for_instance(
+        self,
+        candidates: List[Dict[str, Any]],
+        instance_id: str,
+    ) -> List[Dict[str, Any]]:
+        instance_id = clean_text(instance_id)
+        exact = [
+            item
+            for item in candidates
+            if clean_text(item.get("instance_id")) == instance_id
+        ]
+        if exact:
+            return exact
+
+        # Backward compatibility for summaries produced before audio items were
+        # associated with segmentation instances.
+        return [
+            item
+            for item in candidates
+            if not clean_text(item.get("instance_id"))
+        ]
 
     def _background_audio_items(self, audio_items: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         return [
