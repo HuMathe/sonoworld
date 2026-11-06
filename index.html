@@ -182,6 +182,19 @@
     </head>
     <body>
         <div style="width: 100%; height: 80vh; position: relative; overflow: hidden">
+            <nav class="research-nav" aria-label="More research">
+                <details class="research-dropdown">
+                    <summary>
+                        More Research
+                        <svg class="research-chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                            <path d="m6 9 6 6 6-6"/>
+                        </svg>
+                    </summary>
+                    <div class="research-dropdown-links">
+                        <a href="https://humathe.github.io/sonoworld4d/">SonoWorld4D</a>
+                    </div>
+                </details>
+            </nav>
             <video id="bgVideo" autoplay playsinline loop muted src="assets/bg.mp4" style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover;"></video>
             <div id="floating-btn" onclick="onFloatingClick()">
                 <span id="sound-icon">

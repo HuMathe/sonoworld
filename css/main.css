@@ -962,3 +962,76 @@ html, body {
     flex: 0 0 auto;
     vertical-align: -0.22em;
 }
+
+/* Translucent research navigation over the hero video. */
+.research-nav {
+    position: absolute;
+    top: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 30;
+    width: 220px;
+    max-width: calc(100% - 32px);
+}
+
+.research-dropdown {
+    color: #fff;
+    background: rgba(40, 38, 36, 0.25);
+    border: 0;
+    border-radius: 0 0 12px 12px;
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+}
+
+.research-dropdown:hover {
+    background: rgba(66, 64, 62, 0.38);
+}
+
+.research-dropdown summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 18px;
+    font-size: 18px;
+    font-weight: 400;
+    list-style: none;
+    cursor: pointer;
+}
+
+.research-dropdown summary::-webkit-details-marker {
+    display: none;
+}
+
+.research-chevron {
+    flex-shrink: 0;
+}
+
+.research-dropdown[open] .research-chevron {
+    transform: rotate(180deg);
+}
+
+.research-dropdown-links {
+    padding: 6px;
+    border-top: 1px solid rgba(255, 255, 255, 0.18);
+}
+
+.research-dropdown-links a {
+    display: block;
+    padding: 12px;
+    color: #fff;
+    font-size: 17px;
+    border-radius: 6px;
+}
+
+.research-dropdown-links a:hover {
+    background: rgba(255, 255, 255, 0.12);
+}
+
+.research-dropdown summary:focus-visible,
+.research-dropdown-links a:focus-visible {
+    outline: 2px solid #fff;
+    outline-offset: -4px;
+}
