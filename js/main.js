@@ -19,8 +19,4 @@ document.addEventListener('DOMContentLoaded', function () {
             dropdown.querySelector('summary').focus();
         }
     });
-
-    dropdown.addEventListener('focusout', function (event) {
-        if (!dropdown.contains(event.relatedTarget)) dropdown.open = false;
-    });
 });
